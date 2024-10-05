@@ -4,6 +4,7 @@ import LandingPage from "./components/LandingPage";
 import HomeSearch from "./components/HomeSearch";
 import CateCards from "./components/CateCards";
 import Category from "./components/Category";
+import HeadingText from "./components/Heading";
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
       <LandingPage />
       <HomeSearch />
       <Category />
+      <HeadingText />
     </div>
   );
 };

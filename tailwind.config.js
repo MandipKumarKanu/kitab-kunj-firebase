@@ -7,6 +7,7 @@ export default {
         inter: ["Inter", "sans-serif"],
         meditative: ["Meditative", "sans-serif"],
         sfpro: ["Sfpro", "sans-serif"],
+        suntage: ["Suntage", "sans-serif"],
       },
       colors: {
         primaryColor: "#531D99",

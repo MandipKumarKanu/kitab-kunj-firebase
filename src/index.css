@@ -15,12 +15,15 @@
   font-family: "Sfpro";
   src: url("./assets/fonts/sfpro.OTF") format("OTF");
 }
+@font-face {
+  font-family: "Suntage";
+  src: url("./assets/fonts/Suntage.otf") format("OTF");
+}
 
-*{
+* {
   user-select: none;
 }
 
 body {
   font-family: "Inter", sans-serif;
 }
-
