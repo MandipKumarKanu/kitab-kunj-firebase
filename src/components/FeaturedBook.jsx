@@ -87,8 +87,8 @@ const FeaturedBook = () => {
   ];
 
   return (
-    <div className="m-auto max-w-[1500px] mt-14 p-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="container mx-auto px-4 mt-14">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {booksData.map((book) => (
           <BookCard
             key={book.id}

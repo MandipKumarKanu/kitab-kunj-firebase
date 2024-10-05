@@ -2,21 +2,24 @@ import React from "react";
 
 function LandingPage() {
   return (
-    <div className="m-auto flex flex-col items-center justify-center gap-10 mt-20 px-4 sm:flex-row sm:gap-16">
-      <div className="max-w-[670px] text-center sm:text-left">
-        <div className="font-meditative text-[48px] sm:text-[60px] md:text-[72px] lg:text-[96px] leading-none">
-          Empower Minds, Ignite Change
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20">
+      <div className="flex flex-col items-center lg:flex-row lg:justify-between gap-8 lg:gap-12">
+        <div className="text-center lg:text-left max-w-2xl lg:max-w-[670px]">
+          <h1 className="font-meditative text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-tight">
+            Empower Minds, Ignite Change
+          </h1>
+          <p className="font-sfpro text-threeColor text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mt-4 sm:mt-6">
+            Unleashing the Power of Books Through Generosity
+          </p>
         </div>
-        <div className="font-sfpro text-threeColor text-[20px] sm:text-[22px] md:text-[24px] lg:text-[28px] font-bold mt-5">
-          Unleashing the Power of Books Through Generosity
+
+        <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl">
+          <img
+            src="/image/heroImg.png"
+            alt="reading book"
+            className="w-full h-auto object-contain"
+          />
         </div>
-      </div>
-      <div className="w-full sm:w-1/2 flex items-center justify-center sm:justify-end">
-        <img
-          src="/image/heroImg.png"
-          alt="reading book"
-          className="w-[75] h-auto max-w-[400px] sm:max-w-[600px] md:max-w-[700px] lg:max-w-full"
-        />
       </div>
     </div>
   );
