@@ -6,12 +6,12 @@ const ArrivalCard = ({
   author = "Sample Author",
 }) => {
   return (
-    <div className="max-w-48 w-full">
+    <div className="max-w-[200px] w-full">
       <div className="relative group">
         <img
           src={img}
           alt={title}
-          className="object-cover rounded-lg h-52 w-40 shadow-[8px_10px_8px_rgba(0,0,0,0.15)] transition-transform transform group-hover:scale-105"
+          className="object-cover rounded-lg h-52 w-full shadow-[8px_10px_8px_rgba(0,0,0,0.15)] transition-transform transform group-hover:scale-105"
         />
       </div>
       <div className="flex flex-col mt-3">

@@ -18,7 +18,7 @@ const BookCard = ({
           className="w-full h-full object-cover rounded-lg"
         />
       </div>
-      <div className="flex flex-col justify-between flex-grow">
+      <div className="flex flex-col justify-between flex-grow w-full">
         <div>
           <span className="inline-block uppercase text-sm font-bold text-green-500 mb-1">
             {condition}
@@ -31,7 +31,7 @@ const BookCard = ({
         </div>
 
         <div className="flex flex-col mt-4">
-          <div className="font-semibold text-primary text-xl mb-5">
+          <div className="font-semibold text-primary text-xl mb-2">
             ₹{Number(Offerprice).toFixed(2)}
           </div>
           <button className="w-full px-4 py-2 sm:py-3 bg-btnColor text-white rounded-full hover:bg-opacity-90 transition duration-300">

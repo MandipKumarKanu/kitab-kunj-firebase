@@ -4,40 +4,41 @@ import ArrivalCard from "./ArrivalCard";
 const ArrivalBooks = () => {
   const arrivalBook = [
     {
-      name: "Best Seller",
+      title: "Best Seller",
       img: "/image/book6.webp",
       author: "handleCardClick",
     },
     {
-      name: "Top Picks",
+      title: "Top Picks",
       img: "/image/book5.webp",
       author: "handleCardClick",
     },
     {
-      name: "Reader Picks",
+      title: "Reader Picks",
       img: "/image/book4.webp",
       author: "handleCardClick",
     },
     {
-      name: "Trending Books",
+      title: "Trending Books",
       img: "/image/book3.jpg",
       author: "handleCardClick",
     },
     {
-      name: "Recent Books",
+      title: "Recent Books",
       img: "/image/book2.png",
       author: "handleCardClick",
     },
     {
-      name: "Books for Rent",
+      title: "Books for Rent",
       img: "/image/book1.jpg",
       author: "handleCardClick",
     },
   ];
+
   return (
-    <div className="m-auto max-w-[1500px] mt-14 flex justify-between">
-      {arrivalBook &&
-        arrivalBook.map((arr, index) => (
+    <div className="m-auto max-w-[1500px] mt-14 p-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+        {arrivalBook.map((arr, index) => (
           <ArrivalCard
             key={index}
             img={arr.img}
@@ -45,6 +46,7 @@ const ArrivalBooks = () => {
             author={arr.author}
           />
         ))}
+      </div>
     </div>
   );
 };

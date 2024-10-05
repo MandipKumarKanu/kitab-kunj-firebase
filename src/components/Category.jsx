@@ -40,15 +40,17 @@ function Category() {
   ];
 
   return (
-    <div className="m-auto max-w-[1500px] mt-14 flex justify-between">
-      {cateArray.map((cat, index) => (
-        <CateCards
-          key={index}
-          name={cat.name}
-          img={cat.img}
-          onClick={cat.onClick}
-        />
-      ))}
+    <div className="container mx-auto max-w-[1500px] mt-14 p-4">
+      <div className="grid grid-cols-2 sm:md:lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {cateArray.map((cat, index) => (
+          <CateCards
+            key={index}
+            name={cat.name}
+            img={cat.img}
+            onClick={cat.onClick}
+          />
+        ))}
+      </div>
     </div>
   );
 }

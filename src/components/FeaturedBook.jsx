@@ -87,19 +87,21 @@ const FeaturedBook = () => {
   ];
 
   return (
-    <div className="m-auto max-w-[1500px] w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 p-5">
-      {booksData.map((book) => (
-        <BookCard
-          key={book.id}
-          id={book.id}
-          img={book.img}
-          name={book.name}
-          author={book.author}
-          publishYear={book.publishYear}
-          Offerprice={book.Offerprice}
-          condition={book.condition}
-        />
-      ))}
+    <div className="m-auto max-w-[1500px] mt-14 p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {booksData.map((book) => (
+          <BookCard
+            key={book.id}
+            id={book.id}
+            img={book.img}
+            name={book.name}
+            author={book.author}
+            publishYear={book.publishYear}
+            Offerprice={book.Offerprice}
+            condition={book.condition}
+          />
+        ))}
+      </div>
     </div>
   );
 };

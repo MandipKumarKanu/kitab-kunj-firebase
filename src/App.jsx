@@ -11,7 +11,7 @@ import FeaturedBook from "./components/FeaturedBook";
 const App = () => {
   return (
     <div className="pb-96">
-      <Navbar />
+      {/* <Navbar /> */}
       <LandingPage />
       <HomeSearch />
       <Category />
