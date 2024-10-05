@@ -15,7 +15,9 @@ function HomeSearch() {
         className="border-[1px] px-4 h-10 py-6 text-lg rounded-3xl border-primaryColor w-1/5"
       />
       <input
-        type="text"
+        type="number"
+        min="1900"
+        max={new Date().getFullYear()}
         placeholder="When was the book published?"
         className="border-[1px] px-4 h-10 py-6 text-lg rounded-3xl border-primaryColor w-1/5"
       />

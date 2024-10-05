@@ -5,6 +5,8 @@ import HomeSearch from "./components/HomeSearch";
 import Category from "./components/Category";
 import HeadingText from "./components/Heading";
 import ArrivalBooks from "./components/ArrivalBooks";
+import BookCard from "./components/BookCard";
+import FeaturedBook from "./components/FeaturedBook";
 
 const App = () => {
   return (
@@ -14,6 +16,7 @@ const App = () => {
       <HomeSearch />
       <Category />
       <HeadingText fullName="Featured Books" bgName="FEATURED" />
+      <FeaturedBook />
       <HeadingText fullName="New Arrival" bgName="New Arrival" />
       <ArrivalBooks />
     </div>

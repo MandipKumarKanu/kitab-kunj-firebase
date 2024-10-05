@@ -12,6 +12,8 @@ export default {
       colors: {
         primaryColor: "#531D99",
         secondaryColor: "#8B30FF",
+        threeColor: "#2A2A2A",
+        btnColor: "#9868D7",
       },
     },
   },

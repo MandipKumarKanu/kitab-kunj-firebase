@@ -7,7 +7,7 @@ function LandingPage() {
         <div className="font-meditative text-[96px] leading-none">
           Empower Minds, Ignite Change
         </div>
-        <div className="font-sfpro text-[#2A2A2A] text-[28px] font-bold mt-5">
+        <div className="font-sfpro text-threeColor text-[28px] font-bold mt-5">
           Unleashing the Power of Books Through Generosity
         </div>
       </div>
