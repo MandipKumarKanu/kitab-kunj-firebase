@@ -1,4 +1,5 @@
 import React from "react";
+import PrimaryBtn from "./PrimaryBtn";
 
 const BookCard = ({
   id = 69,
@@ -36,9 +37,10 @@ const BookCard = ({
           <div className="font-semibold text-primary text-xl mb-2">
             ₹{Number(Offerprice).toFixed(2)}
           </div>
-          <button className="w-full px-4 py-2 sm:py-3 bg-btnColor text-white rounded-full hover:bg-opacity-90 transition duration-300">
+          {/* <button className="w-full px-4 py-2 sm:py-3 bg-btnColor text-white rounded-full hover:bg-opacity-90 transition duration-300">
             Buy Now
-          </button>
+          </button> */}
+          <PrimaryBtn name="Buy Now" style="max-w-[165px] "/>
         </div>
       </div>
     </div>
