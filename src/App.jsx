@@ -2,9 +2,9 @@ import React from "react";
 import Navbar from "./components/Navbar";
 import LandingPage from "./components/LandingPage";
 import HomeSearch from "./components/HomeSearch";
-import CateCards from "./components/CateCards";
 import Category from "./components/Category";
 import HeadingText from "./components/Heading";
+import ArrivalBooks from "./components/ArrivalBooks";
 
 const App = () => {
   return (
@@ -13,7 +13,9 @@ const App = () => {
       <LandingPage />
       <HomeSearch />
       <Category />
-      <HeadingText />
+      <HeadingText fullName="Featured Books" bgName="FEATURED" />
+      <HeadingText fullName="New Arrival" bgName="New Arrival" />
+      <ArrivalBooks />
     </div>
   );
 };
