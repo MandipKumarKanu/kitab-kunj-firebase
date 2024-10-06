@@ -23,7 +23,7 @@ const ArrivalBooks = () => {
       const q = query(
         booksRef,
         where("availability", "!=", "donation"),
-        orderBy("postedAt", "desc"),
+        orderBy("postedAt", "asc"),
         limit(6)
       );
       const querySnapshot = await getDocs(q);
@@ -37,7 +37,7 @@ const ArrivalBooks = () => {
 
       console.log("Latest Books:", latestBooks);
 
-      return latestBooks;
+      // return latestBooks;
     } catch (error) {
       console.error("Error fetching latest books:", error);
     }
