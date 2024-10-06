@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "./App.css";
 import Navbar from "./components/Navbar";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
@@ -11,6 +12,7 @@ import { getDoc, doc, collection } from "firebase/firestore";
 import Loader from "./components/loader/loader";
 import AddBook from "./components/AddBook";
 import AllBooks from "./pages/AllBooks";
+import GotoTop from "./components/GoToTop";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -55,6 +57,7 @@ const App = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/addbook" element={<AddBook />} />
         </Routes>
+        <GotoTop />
       </BrowserRouter>
     </div>
   );
