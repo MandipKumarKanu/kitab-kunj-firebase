@@ -1,13 +1,16 @@
 import React, { useState } from "react";
+import { useAuth } from "./context/AuthContext";
 
 const ProfileBooks = () => {
   const [activeTab, setActiveTab] = useState("bought");
+  const { user } = useAuth();
+  console.log("user", user);
 
   const tabs = [
-    { name: "Bought", value: "bought", count: 0 },
-    { name: "Sold", value: "sold", count: 0 },
-    { name: "Rented", value: "rented", count: 0 },
-    { name: "Donated", value: "donated", count: 0 },
+    { name: "Bought", value: "bought", count: user?.purchased || 0 },
+    { name: "Sold", value: "sold", count: user?.sold || 0 },
+    { name: "Rented", value: "rented", count: user?.rented || 0 },
+    { name: "Donated", value: "donated", count: user?.donated || 0 },
   ];
 
   const renderContent = () => {

@@ -46,7 +46,7 @@ const Profile = () => {
 
   const navigate = useNavigate();
 
-  console.log("first", currentUser);
+  // console.log("first", currentUser);
 
   return (
     <>

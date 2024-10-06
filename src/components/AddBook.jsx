@@ -1,4 +1,3 @@
-// AddBook.jsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -45,9 +44,9 @@ const bookSchema = z
       })
       .nonnegative("Price cannot be negative")
       .optional(),
-    perDayPrice: z
+    perWeekPrice: z
       .number({
-        invalid_type_error: "Per day price must be a number",
+        invalid_type_error: "Per week price must be a number",
       })
       .nonnegative("Price cannot be negative")
       .optional(),
@@ -74,15 +73,15 @@ const bookSchema = z
       if (data.bookFor === "rent") {
         return (
           typeof data.originalPrice === "number" &&
-          typeof data.perDayPrice === "number"
+          typeof data.perWeekPrice === "number"
         );
       }
       return true;
     },
     {
       message:
-        "Original price and per day price are required for renting books",
-      path: ["perDayPrice"],
+        "Original price and per week price are required for renting books",
+      path: ["perWeekPrice"],
     }
   )
   .refine(
@@ -106,15 +105,15 @@ const bookSchema = z
       if (
         data.bookFor === "rent" &&
         typeof data.originalPrice === "number" &&
-        typeof data.perDayPrice === "number"
+        typeof data.perWeekPrice === "number"
       ) {
-        return data.perDayPrice <= data.originalPrice * 0.06;
+        return data.perWeekPrice <= data.originalPrice * 0.06;
       }
       return true;
     },
     {
-      message: "Per day price must be less than 6% of original price",
-      path: ["perDayPrice"],
+      message: "Per week price must be less than 6% of original price",
+      path: ["perWeekPrice"],
     }
   );
 
@@ -136,7 +135,7 @@ const AddBook = () => {
       bookFor: "donation",
       originalPrice: 0,
       sellingPrice: 0,
-      perDayPrice: 0,
+      perWeekPrice: 0,
     },
   });
 
@@ -164,7 +163,7 @@ const AddBook = () => {
         language: data.bookLanguage,
         originalPrice: data.originalPrice || 0,
         sellingPrice: data.sellingPrice || 0,
-        perDayPrice: data.perDayPrice || 0,
+        perWeekPrice: data.perWeekPrice || 0,
         edition: data.edition,
         description: data.description || "",
         sellerId: currentUser?.uid,
@@ -181,16 +180,16 @@ const AddBook = () => {
           delete bookData.sellingPrice;
           break;
         case "donation":
-          delete bookData.perDayPrice;
+          delete bookData.perWeekPrice;
           delete bookData.sellingPrice;
           delete bookData.originalPrice;
           break;
         case "sell":
-          delete bookData.perDayPrice;
+          delete bookData.perWeekPrice;
           break;
       }
 
-      await addDoc(collection(db, "books"), bookData);
+      await addDoc(collection(db, "pendingBooks"), bookData);
 
       const userRef = doc(db, "users", currentUser?.uid);
       const fieldName =
@@ -439,21 +438,21 @@ const AddBook = () => {
               </div>
               <div>
                 <label className="block mb-1">
-                  Per Day Price (must be less than{" "}
+                  Per week Price (must be less than{" "}
                   {(originalPrice * 0.06).toFixed(2)}):
                 </label>
                 <input
                   type="number"
-                  {...register("perDayPrice", { valueAsNumber: true })}
+                  {...register("perWeekPrice", { valueAsNumber: true })}
                   className={`border rounded-3xl px-4 py-3 w-full ${
-                    errors.perDayPrice
+                    errors.perWeekPrice
                       ? "border-red-500"
                       : "border-primaryColor"
                   }`}
                 />
-                {errors.perDayPrice && (
+                {errors.perWeekPrice && (
                   <p className="text-red-500 text-sm">
-                    {errors.perDayPrice.message}
+                    {errors.perWeekPrice.message}
                   </p>
                 )}
               </div>

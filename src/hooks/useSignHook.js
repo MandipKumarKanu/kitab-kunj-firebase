@@ -9,7 +9,8 @@ import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 
 export const useSignUpHook = async (data) => {
   // console.log("Signup data:", data);
-
+  delete data.confirmPassword;
+  delete data.password;
   try {
     const resp = await createUserWithEmailAndPassword(
       auth,
