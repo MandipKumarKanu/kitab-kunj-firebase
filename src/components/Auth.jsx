@@ -5,6 +5,9 @@ import { z } from "zod";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { useSignInHook, useSignUpHook } from "../hooks/useSignHook";
+import { useAuth } from "../components/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -33,6 +36,9 @@ const Auth = () => {
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] =
     useState(false);
 
+  const { updatedUser } = useAuth();
+  const navigate = useNavigate();
+
   const {
     register: loginRegister,
     handleSubmit: handleLoginSubmit,
@@ -45,6 +51,7 @@ const Auth = () => {
   const {
     register: signupRegister,
     handleSubmit: handleSignupSubmit,
+    reset: signUpReset,
     formState: { errors: signupErrors },
   } = useForm({
     resolver: zodResolver(signupSchema),
@@ -58,12 +65,23 @@ const Auth = () => {
   const buttonClasses =
     "w-full px-8 py-3 rounded-3xl bg-gradient-to-r from-purple-600 to-purple-400 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 font-bold text-lg";
 
-  const onLoginSubmit = (data) => {
-    console.log("Login data:", data);
+  const onLoginSubmit = async (data) => {
+    try {
+      await useSignInHook(data, updatedUser);
+      navigate(-1);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const onSignupSubmit = (data) => {
-    console.log("Signup data:", data);
+  const onSignupSubmit = async (data) => {
+    try {
+      await useSignUpHook(data);
+      setActiveTab("login");
+      signUpReset();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const renderPasswordInput = (
