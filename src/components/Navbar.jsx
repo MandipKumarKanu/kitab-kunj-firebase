@@ -2,13 +2,18 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { NavLink } from "react-router-dom";
+import DropdownUser from "../hooks/DropDownUser";
+import { auth } from "../config/firebase.config";
 
 const Navbar = () => {
+  const currentUser = auth.currentUser;
+
+  // console.log("currentUser",currentUser)
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
-  // Handle scroll event to toggle fixed navbar
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -23,7 +28,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Prevent background scrolling when menu is open
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -51,7 +55,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* Placeholder div to prevent content jump when navbar becomes fixed */}
       {isFixed && <div style={{ height: "72px" }} />}
 
       <nav className={navbarClasses}>
@@ -113,12 +116,19 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            <NavLink to="/profile">
-              <FontAwesomeIcon
-                icon={faUser}
-                className="w-6 h-6 cursor-pointer transition-all duration-300"
-              />
-            </NavLink>
+            {!currentUser?.uid ? (
+              <>
+                <NavLink to="/auth">
+                  <FontAwesomeIcon
+                    icon={faUser}
+                    size="lg"
+                    className="text-DarkColor cursor-pointer ml-3"
+                  />
+                </NavLink>
+              </>
+            ) : (
+              <DropdownUser />
+            )}
             <button
               className="md:hidden z-50"
               onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -96,10 +96,10 @@ const AddBook = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 lg:mt-10">
+    <div className="container mx-auto px-4 lg:mt-10 mb-12">
       <div className="flex flex-col lg:flex-row justify-center items-start">
         <div className="w-full lg:w-1/2 lg:pr-4 mb-8 lg:mb-0">
-          <div className="bg-gray-100 p-4 rounded-lg shadow-md h-64 sm:h-80 md:h-[695px] items-center justify-center hidden sm:block">
+          <div className="bg-gray-100 p-4 rounded-lg shadow-md h-64 sm:h-80 md:h-[790px] items-center justify-center hidden sm:block">
             <img
               src={previewImage}
               alt="Book cover"
@@ -204,20 +204,18 @@ const AddBook = () => {
           </div>
 
           <div className="mt-4">
-          <label className="block mb-1">Category:</label>
-              <input
-                type="text"
-                {...register("category")}
-                className={`border rounded-3xl px-4 py-3 w-full ${
-                  errors.category ? "border-red-500" : "border-primaryColor"
-                }`}
-              />
-              {errors.category && (
-                <p className="text-red-500 text-sm">
-                  {errors.category.message}
-                </p>
-              )}
-            </div>
+            <label className="block mb-1">Category:</label>
+            <input
+              type="text"
+              {...register("category")}
+              className={`border rounded-3xl px-4 py-3 w-full ${
+                errors.category ? "border-red-500" : "border-primaryColor"
+              }`}
+            />
+            {errors.category && (
+              <p className="text-red-500 text-sm">{errors.category.message}</p>
+            )}
+          </div>
           <div className="mt-4">
             <label className="block mb-1">Book for:</label>
             <div className="flex gap-4">

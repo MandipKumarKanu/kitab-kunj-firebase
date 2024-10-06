@@ -33,7 +33,7 @@ const AllBooks = () => {
       const q = query(
         booksRef,
         // where("availability", "==", "sell", "||", "availability", "==", "rent"),
-        where("sellerId", "!=", currentUser?.uid || ""),
+        where("sellerId", "!=", currentUser?.uid || "")
       );
 
       const querySnapshot = await getDocs(q);
@@ -42,11 +42,9 @@ const AllBooks = () => {
         ...doc.data(),
       }));
 
-      const filteredBook = allBook.filter((book)=>{
+      const filteredBook = allBook.filter((book) => {
         return book.availability != "donation";
-      })
-
-    
+      });
 
       // if (sort === "asc") {
       //   allBook.sort((a, b) => a.Offerprice - b.Offerprice);
