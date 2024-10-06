@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import BookCard from "./BookCard";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
-import { db } from "../config/firebase.config";
+import { auth, db } from "../config/firebase.config";
 
 const FeaturedBook = () => {
+  const currentUser = auth.currentUser;
+
   useEffect(() => {
     fetchLatestBooks();
   }, []);
@@ -15,7 +17,8 @@ const FeaturedBook = () => {
       const booksRef = collection(db, "books");
       const q = query(
         booksRef,
-        where("availability", "!=", "donation"),
+        where("availability", "==", "sell"),
+        where("sellerId", "!=", currentUser?.uid || ""),
         limit(9)
       );
       const querySnapshot = await getDocs(q);

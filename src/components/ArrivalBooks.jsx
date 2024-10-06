@@ -8,9 +8,11 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "../config/firebase.config";
+import { auth, db } from "../config/firebase.config";
 
 const ArrivalBooks = () => {
+  const currentUser = auth.currentUser;
+
   useEffect(() => {
     fetchLatestBooks();
   }, []);
@@ -54,6 +56,7 @@ const ArrivalBooks = () => {
               img={arr.images[0]}
               title={arr.title}
               author={arr.author}
+              availability={arr.availability}
             />
           ))}
       </div>

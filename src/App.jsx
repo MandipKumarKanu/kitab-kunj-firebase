@@ -10,6 +10,7 @@ import { useAuth } from "./components/context/AuthContext";
 import { getDoc, doc, collection } from "firebase/firestore";
 import Loader from "./components/loader/loader";
 import AddBook from "./components/AddBook";
+import AllBooks from "./pages/AllBooks";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -49,6 +50,7 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/allbooks" element={<AllBooks />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/addbook" element={<AddBook />} />
