@@ -12,40 +12,52 @@ const AllBooks = () => {
   const [sort, setSort] = useState("default");
 
   useEffect(() => {
-    fetchLatestBooks();
+    fetchAllBook();
   }, [filter, sort]);
 
-  const fetchLatestBooks = async () => {
+  const fetchAllBook = async () => {
     try {
       const booksRef = collection(db, "books");
-      let q;
+      // let q;
 
-      if (filter === "all") {
-        q = query(booksRef, where("sellerId", "!=", currentUser?.uid || ""));
-      } else {
-        q = query(
-          booksRef,
-          where("sellerId", "!=", currentUser?.uid || ""),
-          where("availability", "==", filter)
-        );
-      }
+      // if (filter === "all") {
+      //   q = query(booksRef, where("sellerId", "!=", currentUser?.uid || ""));
+      // } else {
+      //   q = query(
+      //     booksRef,
+      //     where("sellerId", "!=", currentUser?.uid || ""),
+      //     where("availability", "==", filter)
+      //   );
+      // }
+
+      const q = query(
+        booksRef,
+        // where("availability", "==", "sell", "||", "availability", "==", "rent"),
+        where("sellerId", "!=", currentUser?.uid || ""),
+      );
 
       const querySnapshot = await getDocs(q);
-      const latestBooks = querySnapshot.docs.map((doc) => ({
+      const allBook = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
 
-      if (sort === "asc") {
-        latestBooks.sort((a, b) => a.Offerprice - b.Offerprice);
-      } else if (sort === "desc") {
-        latestBooks.sort((a, b) => b.Offerprice - a.Offerprice);
-      }
+      const filteredBook = allBook.filter((book)=>{
+        return book.availability != "donation";
+      })
 
-      setBooks(latestBooks);
-      console.log("Latest Books:", latestBooks);
+    
 
-      return latestBooks;
+      // if (sort === "asc") {
+      //   allBook.sort((a, b) => a.Offerprice - b.Offerprice);
+      // } else if (sort === "desc") {
+      //   allBook.sort((a, b) => b.Offerprice - a.Offerprice);
+      // }
+
+      setBooks(filteredBook);
+      console.log("Latest Books:", allBook);
+
+      return allBook;
     } catch (error) {
       console.error("Error fetching latest books:", error);
     }
