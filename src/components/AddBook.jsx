@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  increment,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
 
@@ -70,6 +77,22 @@ const AddBook = () => {
       };
 
       await addDoc(collection(db, "books"), bookData);
+
+      const userRef = doc(db, "users", currentUser?.uid);
+
+      if (data.bookFor === "donation") {
+        await updateDoc(userRef, {
+          donated: increment(1),
+        });
+      } else if (data.bookFor === "sell") {
+        await updateDoc(userRef, {
+          sold: increment(1),
+        });
+      } else if (data.bookFor === "rent") {
+        await updateDoc(userRef, {
+          rented: increment(1),
+        });
+      }
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);
@@ -242,7 +265,6 @@ const AddBook = () => {
                 <label className="block mb-1">Original Price:</label>
                 <input
                   type="number"
-                  value={0}
                   {...register("originalPrice", { valueAsNumber: true })}
                   className={`border rounded-3xl px-4 py-3 w-full ${
                     errors.originalPrice
@@ -260,7 +282,6 @@ const AddBook = () => {
                 <label className="block mb-1">Selling Price:</label>
                 <input
                   type="number"
-                  value={0}
                   {...register("sellingPrice", { valueAsNumber: true })}
                   className={`border rounded-3xl px-4 py-3 w-full ${
                     errors.sellingPrice
@@ -282,7 +303,6 @@ const AddBook = () => {
               <label className="block mb-1">Price per Day:</label>
               <input
                 type="number"
-                value={0}
                 {...register("perDayPrice", { valueAsNumber: true })}
                 className={`border rounded-3xl px-4 py-3 w-full ${
                   errors.perDayPrice ? "border-red-500" : "border-primaryColor"
