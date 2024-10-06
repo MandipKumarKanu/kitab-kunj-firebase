@@ -87,10 +87,24 @@ const Navbar = () => {
                 </NavLink>
               </li>
               <li className="cursor-pointer hover:text-primary transition-colors">
-                Buy
+                <NavLink
+                  to="/sellbooks"
+                  className={({ isActive }) =>
+                    isActive ? "text-primaryColor" : "text-defaultColor"
+                  }
+                >
+                  Buy
+                </NavLink>
               </li>
               <li className="cursor-pointer hover:text-primary transition-colors">
-                Rent
+                <NavLink
+                  to="/rentbook"
+                  className={({ isActive }) =>
+                    isActive ? "text-primaryColor" : "text-defaultColor"
+                  }
+                >
+                  Rent
+                </NavLink>
               </li>
               <li className="cursor-pointer hover:text-primary transition-colors">
                 Events
@@ -153,10 +167,24 @@ const Navbar = () => {
                 </NavLink>
               </li>
               <li className="transform hover:translate-x-2 transition-transform cursor-pointer hover:text-primary">
-                Buy
+                <NavLink
+                  to="/sellbooks"
+                  className={({ isActive }) =>
+                    isActive ? "text-primaryColor" : "text-defaultColor"
+                  }
+                >
+                  Buy
+                </NavLink>
               </li>
               <li className="transform hover:translate-x-2 transition-transform cursor-pointer hover:text-primary">
-                Rent
+                <NavLink
+                  to="/rentbook"
+                  className={({ isActive }) =>
+                    isActive ? "text-primaryColor" : "text-defaultColor"
+                  }
+                >
+                  Rent
+                </NavLink>
               </li>
               <li className="transform hover:translate-x-2 transition-transform cursor-pointer hover:text-primary">
                 Events

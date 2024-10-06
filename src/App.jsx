@@ -13,6 +13,8 @@ import Loader from "./components/loader/loader";
 import AddBook from "./components/AddBook";
 import AllBooks from "./pages/AllBooks";
 import GotoTop from "./components/GoToTop";
+import BuyPage from "./pages/BuyPage";
+import RentPage from "./pages/RentPage";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -53,6 +55,8 @@ const App = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/allbooks" element={<AllBooks />} />
+          <Route path="/sellbooks" element={<BuyPage />} />
+          <Route path="/rentbook" element={<RentPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/addbook" element={<AddBook />} />

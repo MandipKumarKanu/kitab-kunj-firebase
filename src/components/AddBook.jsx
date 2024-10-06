@@ -8,6 +8,7 @@ import { auth, db, storage } from "../config/firebase.config";
 
 const bookSchema = z.object({
   bookName: z.string().min(1, "Book name is required"),
+  category: z.string().min(1, "Category is required"),
   bookLanguage: z.string().min(1, "Language is required"),
   author: z.string().min(1, "Author is required"),
   edition: z.string().min(1, "Edition is required"),
@@ -52,6 +53,7 @@ const AddBook = () => {
       const bookData = {
         title: data.bookName,
         author: data.author,
+        category: data.category,
         publishYear: data.publishYear,
         language: data.bookLanguage,
         originalPrice: data.originalPrice,
@@ -201,6 +203,21 @@ const AddBook = () => {
             </div>
           </div>
 
+          <div className="mt-4">
+          <label className="block mb-1">Category:</label>
+              <input
+                type="text"
+                {...register("category")}
+                className={`border rounded-3xl px-4 py-3 w-full ${
+                  errors.category ? "border-red-500" : "border-primaryColor"
+                }`}
+              />
+              {errors.category && (
+                <p className="text-red-500 text-sm">
+                  {errors.category.message}
+                </p>
+              )}
+            </div>
           <div className="mt-4">
             <label className="block mb-1">Book for:</label>
             <div className="flex gap-4">
