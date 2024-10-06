@@ -51,21 +51,21 @@ const AddBook = () => {
       }
 
       const bookData = {
-        title: data.bookName,
-        author: data.author,
-        category: data.category,
-        publishYear: data.publishYear,
-        language: data.bookLanguage,
-        originalPrice: data.originalPrice,
-        sellingPrice: data.sellingPrice,
-        perDayPrice: data.perDayPrice,
-        edition: data.edition,
-        description: data.description,
+        title: data?.bookName,
+        author: data?.author,
+        category: data?.category,
+        publishYear: data?.publishYear,
+        language: data?.bookLanguage,
+        originalPrice: data?.originalPrice || 0,
+        sellingPrice: data?.sellingPrice || 0,
+        perDayPrice: data?.perDayPrice || 0,
+        edition: data?.edition,
+        description: data?.description,
         sellerId: currentUser?.uid || 0,
         updatedAt: new Date().toISOString(),
         condition: "new",
         images: imageUrl ? [imageUrl] : [],
-        availability: data.bookFor,
+        availability: data?.bookFor,
         postedAt: Timestamp.now(),
       };
 

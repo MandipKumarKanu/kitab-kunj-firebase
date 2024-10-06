@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import PrimaryBtn from "./PrimaryBtn";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../config/firebase.config";
 
 const Profile = () => {
+  const currentUser = auth.currentUser;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: "Mandeep Shah",
+    name: currentUser.displayName,
     phone: "123-456-7890",
     image: "https://via.placeholder.com/150",
   });
@@ -43,11 +46,13 @@ const Profile = () => {
 
   const navigate = useNavigate();
 
+  console.log("first", currentUser);
+
   return (
     <>
       <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4 ">
         <img
-          src={profileData.image}
+          src={currentUser?.photoURL || profileData.image}
           alt="profile"
           className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full object-cover"
         />

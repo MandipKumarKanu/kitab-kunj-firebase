@@ -8,7 +8,7 @@ import { auth, db } from "../config/firebase.config";
 import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 
 export const useSignUpHook = async (data) => {
-  console.log("Signup data:", data);
+  // console.log("Signup data:", data);
 
   try {
     const resp = await createUserWithEmailAndPassword(
@@ -67,7 +67,7 @@ export const useLogoutHook = async (updatedUser) => {
   try {
     await signOut(auth);
     updatedUser(null);
-    console.log("User signed out successfully.");
+    // console.log("User signed out successfully.");
   } catch (err) {
     console.error("Logout error:", err);
   }
