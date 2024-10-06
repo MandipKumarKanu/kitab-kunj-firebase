@@ -44,6 +44,9 @@ const AddBook = () => {
     resolver: zodResolver(bookSchema),
     defaultValues: {
       bookFor: "donation",
+      originalPrice: 0,
+      sellingPrice: 0,
+      perDayPrice: 0,
     },
   });
 
