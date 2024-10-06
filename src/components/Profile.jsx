@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PrimaryBtn from "./PrimaryBtn";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,6 +41,8 @@ const Profile = () => {
     handleCloseModal();
   };
 
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4">
@@ -61,7 +64,11 @@ const Profile = () => {
               onClick={handleOpenModal}
             />
             <div className="w-[190px] sm:absolute sm:top-4 sm:right-20 sm:w-auto">
-              <PrimaryBtn name="Add Book +" style="max-w-[180px]" />
+              <PrimaryBtn
+                name="Add Book +"
+                style="max-w-[180px]"
+                onClick={() => navigate("/addbook")}
+              />
             </div>
           </div>
         </div>
