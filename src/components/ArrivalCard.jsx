@@ -1,6 +1,7 @@
 import React from "react";
 
 const ArrivalCard = ({
+  id,
   img = "https://via.placeholder.com/200",
   title = "Sample Title",
   author = "Sample Author",

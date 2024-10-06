@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
 
@@ -57,12 +57,11 @@ const AddBook = () => {
         edition: data.edition,
         description: data.description,
         sellerId: currentUser?.uid || 0,
-        postedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         condition: "new",
         images: imageUrl ? [imageUrl] : [],
-        stock: 10,
         availability: data.bookFor,
+        postedAt: Timestamp.now(),
       };
 
       await addDoc(collection(db, "books"), bookData);
