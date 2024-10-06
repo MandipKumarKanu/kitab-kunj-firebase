@@ -14,6 +14,7 @@ export default {
         secondaryColor: "#8B30FF",
         threeColor: "#2A2A2A",
         btnColor: "#9868D7",
+        greyColor: "#D9D9D9",
       },
     },
   },

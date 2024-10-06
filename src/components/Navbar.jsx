@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,11 +19,11 @@ const Navbar = () => {
   }, [isMenuOpen]);
 
   return (
-    <nav className="top-0 left-0 right-0 bg-white z-50">
+    <nav className="top-0 left-0 right-0 bg-white z-50 py-3">
       <div className="container mx-auto px-4 flex items-center justify-between h-16">
         <div>
           <img
-            src="/api/placeholder/112/40"
+            src="/image/logo.png"
             alt="KitabKunj"
             className="w-28 object-contain"
           />
@@ -30,6 +31,17 @@ const Navbar = () => {
 
         <div className="hidden md:block">
           <ul className="flex gap-8 lg:gap-12 xl:gap-24 text-lg">
+            <li className="cursor-pointer hover:text-primary transition-colors">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  isActive ? "text-primaryColor" : "text-defaultColor"
+                }
+              >
+                Home
+              </NavLink>
+            </li>
+
             <li className="cursor-pointer hover:text-primary transition-colors">
               All Books
             </li>
@@ -46,8 +58,9 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <FontAwesomeIcon icon={faUser} className="w-6 h-6 cursor-pointer" />
-
+          <NavLink to="/profile">
+            <FontAwesomeIcon icon={faUser} className="w-6 h-6 cursor-pointer" />
+          </NavLink>
           <button
             className="md:hidden z-50"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -69,6 +82,16 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-4 pt-24 pb-8 h-full flex flex-col">
           <ul className="flex flex-col gap-8 text-2xl font-medium">
+            <li className="transform hover:translate-x-2 transition-transform cursor-pointer hover:text-primary">
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  isActive ? "text-primaryColor" : "text-defaultColor"
+                }
+              >
+                Home
+              </NavLink>
+            </li>
             <li className="transform hover:translate-x-2 transition-transform cursor-pointer hover:text-primary">
               All Books
             </li>

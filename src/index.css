@@ -19,6 +19,10 @@
   font-family: "Suntage";
   src: url("./assets/fonts/Suntage.otf") format("OTF");
 }
+@font-face {
+  font-family: "Suntage";
+  src: url("./assets/fonts/Inter.woff2") format("woff2");
+}
 
 * {
   user-select: none;

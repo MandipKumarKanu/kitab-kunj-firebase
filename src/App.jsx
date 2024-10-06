@@ -1,24 +1,57 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
-import LandingPage from "./components/LandingPage";
-import HomeSearch from "./components/HomeSearch";
-import Category from "./components/Category";
-import HeadingText from "./components/Heading";
-import ArrivalBooks from "./components/ArrivalBooks";
-import BookCard from "./components/BookCard";
-import FeaturedBook from "./components/FeaturedBook";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import ProfilePage from "./pages/ProfilePage";
+import Auth from "./components/Auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from "./config/firebase.config";
+import { useAuth } from "./components/context/AuthContext";
+import { getDoc, doc, collection } from "firebase/firestore";
+import Loader from "./components/loader/loader";
 
 const App = () => {
+  const { updatedUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        if (user.uid) {
+          const userDoc = await getDoc(doc(collection(db, "users"), user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log(userData);
+            updatedUser(userData);
+          }
+        }
+      } else {
+        updatedUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <>
+        <Loader />
+      </>
+    );
+  }
+
   return (
-    <div className="pb-96">
-      <Navbar />
-      <LandingPage />
-      <HomeSearch />
-      <Category />
-      <HeadingText fullName="Featured Books" bgName="FEATURED" />
-      <FeaturedBook />
-      <HeadingText fullName="New Arrival" bgName="New Arrival" />
-      <ArrivalBooks />
+    <div>
+      <BrowserRouter>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/auth" element={<Auth />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 };
