@@ -38,7 +38,7 @@ export const useSignUpHook = async (data) => {
   }
 };
 
-export const useSignInHook = async (data, updatedUser) => {
+export const useSignInHook = async (data, updatedUser, navigate) => {
   try {
     const resp = await signInWithEmailAndPassword(
       auth,
