@@ -1,3 +1,4 @@
+// AddBook.jsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,27 +14,116 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
 
-const bookSchema = z.object({
-  bookName: z.string().min(1, "Book name is required"),
-  category: z.string().min(1, "Category is required"),
-  bookLanguage: z.string().min(1, "Language is required"),
-  author: z.string().min(1, "Author is required"),
-  edition: z.string().min(1, "Edition is required"),
-  publishYear: z.string().length(4, "Must be a valid year"),
-  bookFor: z.enum(["donation", "sell", "rent"], {
-    required_error: "Please select an option",
-  }),
-  originalPrice: z.number().optional(),
-  sellingPrice: z.number().optional(),
-  perDayPrice: z.number().optional(),
-  description: z.string().optional(),
-});
+const bookSchema = z
+  .object({
+    bookName: z.string().min(1, "Book name is required"),
+    category: z.string().min(1, "Category is required"),
+    bookLanguage: z.string().min(1, "Language is required"),
+    author: z.string().min(1, "Author is required"),
+    edition: z.string().min(1, "Edition is required"),
+    publishYear: z
+      .string()
+      .length(4, "Must be a valid year")
+      .refine((year) => {
+        const numYear = parseInt(year);
+        const currentYear = new Date().getFullYear();
+        return numYear >= 1800 && numYear <= currentYear;
+      }, "Year must be between 1800 and current year"),
+    bookFor: z.enum(["donation", "sell", "rent"], {
+      required_error: "Please select an option",
+    }),
+    originalPrice: z
+      .number({
+        required_error: "Original price is required",
+        invalid_type_error: "Original price must be a number",
+      })
+      .nonnegative("Price cannot be negative")
+      .optional(),
+    sellingPrice: z
+      .number({
+        invalid_type_error: "Selling price must be a number",
+      })
+      .nonnegative("Price cannot be negative")
+      .optional(),
+    perDayPrice: z
+      .number({
+        invalid_type_error: "Per day price must be a number",
+      })
+      .nonnegative("Price cannot be negative")
+      .optional(),
+    description: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.bookFor === "sell") {
+        return (
+          typeof data.originalPrice === "number" &&
+          typeof data.sellingPrice === "number"
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "Original price and selling price are required for selling books",
+      path: ["sellingPrice"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.bookFor === "rent") {
+        return (
+          typeof data.originalPrice === "number" &&
+          typeof data.perDayPrice === "number"
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "Original price and per day price are required for renting books",
+      path: ["perDayPrice"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (
+        data.bookFor === "sell" &&
+        typeof data.originalPrice === "number" &&
+        typeof data.sellingPrice === "number"
+      ) {
+        return data.sellingPrice <= data.originalPrice * 0.4;
+      }
+      return true;
+    },
+    {
+      message: "Selling price must be less than 40% of original price",
+      path: ["sellingPrice"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (
+        data.bookFor === "rent" &&
+        typeof data.originalPrice === "number" &&
+        typeof data.perDayPrice === "number"
+      ) {
+        return data.perDayPrice <= data.originalPrice * 0.06;
+      }
+      return true;
+    },
+    {
+      message: "Per day price must be less than 6% of original price",
+      path: ["perDayPrice"],
+    }
+  );
 
 const AddBook = () => {
   const currentUser = auth.currentUser;
   const [loading, setLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState("/image/addbook.png");
   const [bookImage, setBookImage] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -50,68 +140,87 @@ const AddBook = () => {
     },
   });
 
+  const bookForValue = watch("bookFor");
+  const originalPrice = watch("originalPrice") || 0;
+
   const onSubmit = async (data) => {
+    if (!bookImage) {
+      alert("Please select a book image");
+      return;
+    }
+
     try {
       setLoading(true);
-      let imageUrl = "";
-      if (bookImage) {
-        const storageRef = ref(storage, `books/${bookImage.name}`);
-        await uploadBytes(storageRef, bookImage);
-        imageUrl = await getDownloadURL(storageRef);
-      }
+
+      const storageRef = ref(storage, `books/${bookImage.name}`);
+      await uploadBytes(storageRef, bookImage);
+      const imageUrl = await getDownloadURL(storageRef);
 
       const bookData = {
-        title: data?.bookName,
-        author: data?.author,
-        category: data?.category,
-        publishYear: data?.publishYear,
-        language: data?.bookLanguage,
-        originalPrice: data?.originalPrice || 0,
-        sellingPrice: data?.sellingPrice || 0,
-        perDayPrice: data?.perDayPrice || 0,
-        edition: data?.edition,
-        description: data?.description,
-        sellerId: currentUser?.uid || 0,
+        title: data.bookName,
+        author: data.author,
+        category: data.category,
+        publishYear: data.publishYear,
+        language: data.bookLanguage,
+        originalPrice: data.originalPrice || 0,
+        sellingPrice: data.sellingPrice || 0,
+        perDayPrice: data.perDayPrice || 0,
+        edition: data.edition,
+        description: data.description || "",
+        sellerId: currentUser?.uid,
+        sellerName: currentUser?.displayName || "",
         updatedAt: new Date().toISOString(),
         condition: "new",
-        images: imageUrl ? [imageUrl] : [],
-        availability: data?.bookFor,
+        images: [imageUrl],
+        availability: data.bookFor,
         postedAt: Timestamp.now(),
       };
+
+      switch (data.bookFor) {
+        case "rent":
+          delete bookData.sellingPrice;
+          break;
+        case "donation":
+          delete bookData.perDayPrice;
+          delete bookData.sellingPrice;
+          delete bookData.originalPrice;
+          break;
+        case "sell":
+          delete bookData.perDayPrice;
+          break;
+      }
 
       await addDoc(collection(db, "books"), bookData);
 
       const userRef = doc(db, "users", currentUser?.uid);
-
-      if (data.bookFor === "donation") {
-        await updateDoc(userRef, {
-          donated: increment(1),
-        });
-      } else if (data.bookFor === "sell") {
-        await updateDoc(userRef, {
-          sold: increment(1),
-        });
-      } else if (data.bookFor === "rent") {
-        await updateDoc(userRef, {
-          rented: increment(1),
-        });
-      }
+      await updateDoc(userRef, {
+        [data.bookFor === "donation"
+          ? "donated"
+          : data.bookFor === "sell"
+          ? "sold"
+          : "rented"]: increment(1),
+      });
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);
       reset();
+
+      alert("Book added successfully!");
     } catch (error) {
       console.error("Error adding book:", error);
+      alert("Error adding book. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const bookForValue = watch("bookFor");
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size should be less than 5MB");
+        return;
+      }
       setBookImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -125,7 +234,7 @@ const AddBook = () => {
     <div className="container mx-auto px-4 lg:mt-10 mb-12">
       <div className="flex flex-col lg:flex-row justify-center items-start">
         <div className="w-full lg:w-1/2 lg:pr-4 mb-8 lg:mb-0">
-          <div className="bg-gray-100 p-4 rounded-lg shadow-md h-64 sm:h-80 md:h-[790px] items-center justify-center hidden sm:block">
+          <div className="bg-gray-100 p-4 rounded-lg shadow-md h-64 sm:h-80 md:h-[790px] flex items-center justify-center">
             <img
               src={previewImage}
               alt="Book cover"
@@ -164,7 +273,6 @@ const AddBook = () => {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="border rounded-3xl px-4 py-3 w-full border-primaryColor"
-                required
               />
             </div>
 
@@ -242,6 +350,7 @@ const AddBook = () => {
               <p className="text-red-500 text-sm">{errors.category.message}</p>
             )}
           </div>
+
           <div className="mt-4">
             <label className="block mb-1">Book for:</label>
             <div className="flex gap-4">
@@ -282,7 +391,10 @@ const AddBook = () => {
                 )}
               </div>
               <div>
-                <label className="block mb-1">Selling Price:</label>
+                <label className="block mb-1">
+                  Selling Price (must be less than{" "}
+                  {(originalPrice * 0.4).toFixed(2)}):
+                </label>
                 <input
                   type="number"
                   {...register("sellingPrice", { valueAsNumber: true })}
@@ -302,20 +414,44 @@ const AddBook = () => {
           )}
 
           {bookForValue === "rent" && (
-            <div className="mt-4">
-              <label className="block mb-1">Price per Day:</label>
-              <input
-                type="number"
-                {...register("perDayPrice", { valueAsNumber: true })}
-                className={`border rounded-3xl px-4 py-3 w-full ${
-                  errors.perDayPrice ? "border-red-500" : "border-primaryColor"
-                }`}
-              />
-              {errors.perDayPrice && (
-                <p className="text-red-500 text-sm">
-                  {errors.perDayPrice.message}
-                </p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block mb-1">Original Price:</label>
+                <input
+                  type="number"
+                  {...register("originalPrice", { valueAsNumber: true })}
+                  className={`border rounded-3xl px-4 py-3 w-full ${
+                    errors.originalPrice
+                      ? "border-red-500"
+                      : "border-primaryColor"
+                  }`}
+                />
+                {errors.originalPrice && (
+                  <p className="text-red-500 text-sm">
+                    {errors.originalPrice.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-1">
+                  Per Day Price (must be less than{" "}
+                  {(originalPrice * 0.06).toFixed(2)}):
+                </label>
+                <input
+                  type="number"
+                  {...register("perDayPrice", { valueAsNumber: true })}
+                  className={`border rounded-3xl px-4 py-3 w-full ${
+                    errors.perDayPrice
+                      ? "border-red-500"
+                      : "border-primaryColor"
+                  }`}
+                />
+                {errors.perDayPrice && (
+                  <p className="text-red-500 text-sm">
+                    {errors.perDayPrice.message}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -337,9 +473,36 @@ const AddBook = () => {
 
           <button
             type="submit"
-            className="mt-6 bg-blue-500 px-4 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white font-bold shadow-lg transition-transform duration-300 ease-in-out hover:scale-105"
+            disabled={loading}
+            className="mt-6 w-full bg-blue-500 px-4 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white font-bold shadow-lg transition-transform duration-300 ease-in-out hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Add Book
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Adding Book...
+              </span>
+            ) : (
+              "Add Book"
+            )}
           </button>
         </form>
       </div>
