@@ -8,6 +8,13 @@ import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { useSignInHook, useSignUpHook } from "../hooks/useSignHook";
 import { useAuth } from "../components/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import {
+  auth,
+  db,
+  googleProvider,
+  signInWithPopup,
+} from "../config/firebase.config";
+import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),
@@ -58,17 +65,59 @@ const Auth = () => {
     mode: "onChange",
   });
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const { user } = result;
+
+      if (user.uid) {
+        const userRef = doc(collection(db, "users"), user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("Existing user data:", userData);
+          updatedUser(userData);
+        } else {
+          const newUser = {
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName,
+            image: user.photoURL,
+            credit: 1000,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            ordered: 0,
+            purchased: 0,
+            sold: 0,
+            rented: 0,
+            donated: 0,
+          };
+
+          await setDoc(userRef, newUser);
+
+          updatedUser(newUser);
+          console.log("New user created and stored:", newUser);
+        }
+      }
+
+      navigate("/");
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+    }
+  };
+
   const inputClasses =
     "w-full border-[1px] border-gray-300 px-4 py-3 rounded-3xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white";
   const labelClasses = "block text-gray-700 font-medium mb-2";
   const errorClasses = "text-red-500 text-sm mt-1 ml-2";
   const buttonClasses =
-    "w-full px-8 py-3 rounded-3xl bg-gradient-to-r from-purple-600 to-purple-400 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 font-bold text-lg";
+    "w-full px-8 py-3 rounded-3xl bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-transform duration-300 ease-in-out hover:scale-105";
 
   const onLoginSubmit = async (data) => {
     try {
-      await useSignInHook(data, updatedUser);
-      navigate(-1);
+      await useSignInHook(data, updatedUser, navigate);
+      // navigate(-1);
     } catch (err) {
       console.error(err);
     }
@@ -114,7 +163,7 @@ const Auth = () => {
   const renderLoginForm = () => (
     <form
       onSubmit={handleLoginSubmit(onLoginSubmit)}
-      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl"
+      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10"
     >
       <div>
         <label htmlFor="loginEmail" className={labelClasses}>
@@ -170,6 +219,7 @@ const Auth = () => {
       <button
         type="button"
         className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 shadow-md border-2 border-gray-300 font-bold"
+        onClick={handleGoogleSignIn}
       >
         <FontAwesomeIcon icon={faGoogle} className="text-xl" />
         Login with Google
@@ -180,7 +230,7 @@ const Auth = () => {
   const renderSignupForm = () => (
     <form
       onSubmit={handleSignupSubmit(onSignupSubmit)}
-      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl"
+      className="flex flex-col gap-6 mt-6 bg-white p-8 rounded-2xl border-2 shadow-xl mb-10"
     >
       <div>
         <label htmlFor="signupName" className={labelClasses}>
@@ -261,6 +311,7 @@ const Auth = () => {
       <button
         type="button"
         className="flex items-center justify-center gap-3 bg-white text-gray-700 p-3 rounded-3xl hover:bg-gray-50 transition-all duration-300 shadow-md border-2 border-gray-300 font-bold"
+        onClick={handleGoogleSignIn}
       >
         <FontAwesomeIcon icon={faGoogle} className="text-xl" />
         Sign up with Google

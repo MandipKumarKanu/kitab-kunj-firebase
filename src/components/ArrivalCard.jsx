@@ -1,18 +1,26 @@
 import React from "react";
 
 const ArrivalCard = ({
+  id,
   img = "https://via.placeholder.com/200",
   title = "Sample Title",
   author = "Sample Author",
+  availability = "sell",
 }) => {
   return (
-    <div className="max-w-[200px] w-full">
-      <div className="relative group">
+    <div className="max-w-[200px] w-full group transition-transform transform hover:scale-105 cursor-pointer">
+      <div className="relative">
         <img
           src={img}
           alt={title}
-          className="object-cover rounded-lg h-52 w-full shadow-[8px_10px_8px_rgba(0,0,0,0.15)] transition-transform transform group-hover:scale-105"
+          loading="lazy"
+          className="object-cover rounded-lg h-52 w-full shadow-[8px_10px_8px_rgba(0,0,0,0.15)]"
         />
+        <div
+          className={`absolute bottom-0 right-0 p-2 px-3 text-sm text-white font-bold rounded-tl-xl opacity-90 bg-gradient-to-r from-primaryColor to-secondaryColor uppercase`}
+        >
+          {availability}
+        </div>
       </div>
       <div className="flex flex-col mt-3">
         <strong className="text-lg font-semibold text-gray-800 overflow-hidden text-ellipsis whitespace-nowrap">

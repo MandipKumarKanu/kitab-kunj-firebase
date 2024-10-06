@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import PrimaryBtn from "./PrimaryBtn";
+import { useNavigate } from "react-router-dom";
+import { auth } from "../config/firebase.config";
 
 const Profile = () => {
+  const currentUser = auth.currentUser;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: "Mandeep Shah",
+    name: currentUser.displayName,
     phone: "123-456-7890",
     image: "https://via.placeholder.com/150",
   });
@@ -40,11 +44,15 @@ const Profile = () => {
     handleCloseModal();
   };
 
+  const navigate = useNavigate();
+
+  console.log("first", currentUser);
+
   return (
     <>
-      <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4">
+      <div className="m-auto flex flex-col items-center gap-4 relative mt-10 px-4 ">
         <img
-          src={profileData.image}
+          src={currentUser?.photoURL || profileData.image}
           alt="profile"
           className="w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 rounded-full object-cover"
         />
@@ -61,14 +69,18 @@ const Profile = () => {
               onClick={handleOpenModal}
             />
             <div className="w-[190px] sm:absolute sm:top-4 sm:right-20 sm:w-auto">
-              <PrimaryBtn name="Add Book +" style="max-w-[180px]" />
+              <PrimaryBtn
+                name="Add Book +"
+                style="max-w-[180px]"
+                onClick={() => navigate("/addbook")}
+              />
             </div>
           </div>
         </div>
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 ">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
           <div className="bg-white p-8 rounded-lg max-w-lg w-full shadow-lg mx-6">
             <h2 className="text-3xl font-semibold mb-6 text-gray-900">
               Edit Profile

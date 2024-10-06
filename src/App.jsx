@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "./App.css";
 import Navbar from "./components/Navbar";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
@@ -9,6 +10,11 @@ import { auth, db } from "./config/firebase.config";
 import { useAuth } from "./components/context/AuthContext";
 import { getDoc, doc, collection } from "firebase/firestore";
 import Loader from "./components/loader/loader";
+import AddBook from "./components/AddBook";
+import AllBooks from "./pages/AllBooks";
+import GotoTop from "./components/GoToTop";
+import BuyPage from "./pages/BuyPage";
+import RentPage from "./pages/RentPage";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -48,9 +54,14 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/allbooks" element={<AllBooks />} />
+          <Route path="/sellbooks" element={<BuyPage />} />
+          <Route path="/rentbook" element={<RentPage />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/addbook" element={<AddBook />} />
         </Routes>
+        <GotoTop />
       </BrowserRouter>
     </div>
   );
