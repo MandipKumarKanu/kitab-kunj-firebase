@@ -193,13 +193,18 @@ const AddBook = () => {
       await addDoc(collection(db, "books"), bookData);
 
       const userRef = doc(db, "users", currentUser?.uid);
-      await updateDoc(userRef, {
-        [data.bookFor === "donation"
+      const fieldName =
+        data.bookFor === "donation"
           ? "donated"
           : data.bookFor === "sell"
           ? "sold"
-          : "rented"]: increment(1),
-      });
+          : null;
+
+      if (fieldName) {
+        await updateDoc(userRef, {
+          [fieldName]: increment(1),
+        });
+      }
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);
