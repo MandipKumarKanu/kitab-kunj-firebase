@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ProfilePage from "./pages/ProfilePage";
 import Auth from "./components/Auth";
@@ -15,10 +15,16 @@ import AllBooks from "./pages/AllBooks";
 import GotoTop from "./components/GoToTop";
 import BuyPage from "./pages/BuyPage";
 import RentPage from "./pages/RentPage";
+import AdminLayout from "./components/admin/layout/AdminLayout";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import ViewApprovedBooks from "./components/admin/ViewApprovedBooks";
+import PendingApproval from "./components/admin/PendingApproval";
 
 const App = () => {
   const { updatedUser } = useAuth();
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const { pathname } = location;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -49,21 +55,25 @@ const App = () => {
   }
 
   return (
-    <div>
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/allbooks" element={<AllBooks />} />
-          <Route path="/sellbooks" element={<BuyPage />} />
-          <Route path="/rentbook" element={<RentPage />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/addbook" element={<AddBook />} />
-        </Routes>
-        <GotoTop />
-      </BrowserRouter>
-    </div>
+    <>
+      {!pathname.includes("/admin") && <Navbar />}
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/allbooks" element={<AllBooks />} />
+        <Route path="/sellbooks" element={<BuyPage />} />
+        <Route path="/rentbook" element={<RentPage />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/addbook" element={<AddBook />} />
+
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin/home" element={<AdminDashboard />} />
+          <Route path="/admin/toapprove" element={<PendingApproval />} />
+          <Route path="/admin/approvedbooks" element={<ViewApprovedBooks />} />
+        </Route>
+      </Routes>
+      <GotoTop />
+    </>
   );
 };
 
