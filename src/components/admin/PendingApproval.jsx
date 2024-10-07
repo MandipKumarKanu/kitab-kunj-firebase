@@ -30,7 +30,7 @@ const PendingApproval = () => {
 
   const fetchPendingBooks = async () => {
     try {
-      const pendingBooksRef = collection(db, "books");
+      const pendingBooksRef = collection(db, "pendingBooks");
       const querySnapshot = await getDocs(pendingBooksRef);
       const fetchedBooks = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
@@ -60,7 +60,7 @@ const PendingApproval = () => {
 
   const handleApprove = async (bookId, sellerId) => {
     try {
-      const bookRef = doc(db, "books", bookId);
+      const bookRef = doc(db, "pendingBooks", bookId);
       const bookDoc = await getDoc(bookRef);
       const bookData = bookDoc.data();
 
@@ -87,9 +87,10 @@ const PendingApproval = () => {
 
   const handleDecline = async (bookId, sellerId) => {
     try {
-      const bookRef = doc(db, "books", bookId);
+      const bookRef = doc(db, "pendingBooks", bookId);
       const bookDoc = await getDoc(bookRef);
       const bookData = bookDoc.data();
+      console.log(bookData);
 
       await addDoc(collection(db, "declinedBooks"), {
         ...bookData,
@@ -305,27 +306,79 @@ const PendingApproval = () => {
       )}
 
       {confirmationDialog.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <h2 className="text-lg font-bold mb-4">
-              Are you sure you want to{" "}
-              {confirmationDialog.action === "approve" ? "approve" : "decline"}{" "}
-              this book?
-            </h2>
-            <div className="flex justify-between">
-              <button
-                onClick={confirmAction}
-                className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition"
-              >
-                Yes
-              </button>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl transform scale-100 animate-in zoom-in-95 duration-200">
+            <div className="text-center sm:text-left">
+              <div className="flex items-center gap-3 mb-2">
+                <div
+                  className={`rounded-full p-2 ${
+                    confirmationDialog.action === "approve"
+                      ? "bg-emerald-100 text-emerald-600"
+                      : "bg-red-100 text-red-600"
+                  }`}
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      confirmationDialog.action === "approve"
+                        ? "check-circle"
+                        : "times-circle"
+                    }
+                    className="text-xl"
+                  />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Confirm{" "}
+                  {confirmationDialog.action === "approve"
+                    ? "Approval"
+                    : "Decline"}
+                </h2>
+              </div>
+
+              <p className="mt-2 text-gray-600">
+                Are you sure you want to{" "}
+                {confirmationDialog.action === "approve"
+                  ? "approve"
+                  : "decline"}{" "}
+                <span className="font-medium text-gray-900">
+                  "{confirmationDialog.book?.title}"
+                </span>
+                ?
+              </p>
+              <p className="mt-2 text-sm text-gray-500">
+                This action cannot be undone. The book will be moved to the{" "}
+                {confirmationDialog.action === "approve"
+                  ? "approved"
+                  : "declined"}{" "}
+                collection.
+              </p>
+            </div>
+
+            <div className="mt-6 sm:mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <button
                 onClick={() =>
                   setConfirmationDialog({ ...confirmationDialog, open: false })
                 }
-                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+                className="inline-flex justify-center items-center px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
               >
-                No
+                Cancel
+              </button>
+              <button
+                onClick={confirmAction}
+                className={`inline-flex justify-center items-center px-4 py-2.5 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors ${
+                  confirmationDialog.action === "approve"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500"
+                    : "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+                }`}
+              >
+                <FontAwesomeIcon
+                  icon={
+                    confirmationDialog.action === "approve" ? "check" : "times"
+                  }
+                  className="mr-2"
+                />
+                {confirmationDialog.action === "approve"
+                  ? "Approve"
+                  : "Decline"}
               </button>
             </div>
           </div>
