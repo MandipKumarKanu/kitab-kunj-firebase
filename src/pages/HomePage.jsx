@@ -5,6 +5,7 @@ import Category from "../components/Category";
 import HeadingText from "../components/Heading";
 import FeaturedBook from "../components/FeaturedBook";
 import ArrivalBooks from "../components/ArrivalBooks";
+import DonationSection from "../components/DonationSection";
 
 function HomePage() {
   return (
@@ -16,6 +17,8 @@ function HomePage() {
       <FeaturedBook />
       <HeadingText fullName="New Arrival" bgName="New Arrival" />
       <ArrivalBooks />
+      <HeadingText fullName="Recent Donors" bgName="Donors" />
+      <DonationSection />
     </>
   );
 }

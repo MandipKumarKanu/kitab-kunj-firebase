@@ -49,6 +49,11 @@ function HomeSearch() {
 
   const handleCloseResults = () => {
     setShowResults(false);
+    setSearchFields({
+      title: "",
+      author: "",
+      year: "",
+    });
   };
 
   return (
@@ -96,7 +101,7 @@ function HomeSearch() {
         <div className="mt-8 w-full container relative mb-8 bg-red-50 h-auto px-8 py-10 rounded-3xl">
           <button
             onClick={handleCloseResults}
-            className="absolute top-0 right-8 p-2"
+            className="absolute top-1 right-8 p-2"
           >
             <FontAwesomeIcon icon={faTimes} className="text-gray-600 text-xl" />
           </button>

@@ -192,19 +192,19 @@ const AddBook = () => {
 
       await addDoc(collection(db, "pendingBooks"), bookData);
 
-      const userRef = doc(db, "users", currentUser?.uid);
-      const fieldName =
-        data.bookFor === "donation"
-          ? "donated"
-          : data.bookFor === "sell"
-          ? "sold"
-          : null;
+      // const userRef = doc(db, "users", currentUser?.uid);
+      // const fieldName =
+      //   data.bookFor === "donation"
+      //     ? "donated"
+      //     : data.bookFor === "sell"
+      //     ? "sold"
+      //     : null;
 
-      if (fieldName) {
-        await updateDoc(userRef, {
-          [fieldName]: increment(1),
-        });
-      }
+      // if (fieldName) {
+      //   await updateDoc(userRef, {
+      //     [fieldName]: increment(1),
+      //   });
+      // }
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);
