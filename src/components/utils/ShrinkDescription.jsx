@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-const ShrinkDescription = ({ desc }) => {
+const ShrinkDescription = ({ desc, size = 150 }) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const MAX_DESCRIPTION_LENGTH = 150;
+  const MAX_DESCRIPTION_LENGTH = size;
 
   const toggleDescription = () => {
     setShowFullDescription((prev) => !prev);
@@ -44,9 +44,7 @@ const ShrinkDescription = ({ desc }) => {
     );
   };
 
-  return (
-    <div className="">{renderDescription()}</div>
-  );
+  return <div className="">{renderDescription()}</div>;
 };
 
 export default ShrinkDescription;

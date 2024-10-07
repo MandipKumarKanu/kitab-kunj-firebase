@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
+import { capitalizeFirstLetter } from "./utils/Capitalise";
 
 const bookSchema = z
   .object({
@@ -156,7 +157,7 @@ const AddBook = () => {
       const imageUrl = await getDownloadURL(storageRef);
 
       const bookData = {
-        title: data.bookName,
+        title: capitalizeFirstLetter(data.bookName),
         author: data.author,
         category: data.category,
         publishYear: data.publishYear,

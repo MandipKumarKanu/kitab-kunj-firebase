@@ -92,6 +92,7 @@ const Auth = () => {
             sold: 0,
             rented: 0,
             donated: 0,
+            wishlist: [],
           };
 
           await setDoc(userRef, newUser);
@@ -116,8 +117,17 @@ const Auth = () => {
 
   const onLoginSubmit = async (data) => {
     try {
-      await useSignInHook(data, updatedUser, navigate);
-      // navigate(-1);
+      const user = await useSignInHook(data, updatedUser, navigate);
+      console.log(user);
+      if (!user.emailVerified) {
+        alert(
+          "Please verify your email before logging in, Check Inbox of provided Email"
+        );
+        await auth.signOut();
+        return;
+      }
+
+      navigate(-1);
     } catch (err) {
       console.error(err);
     }
@@ -126,6 +136,9 @@ const Auth = () => {
   const onSignupSubmit = async (data) => {
     try {
       await useSignUpHook(data);
+      alert(
+        "Account created successfully! Please check your email for verification."
+      );
       setActiveTab("login");
       signUpReset();
     } catch (err) {

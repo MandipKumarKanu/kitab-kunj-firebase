@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const ArrivalCard = ({
   id,
@@ -7,8 +8,12 @@ const ArrivalCard = ({
   author = "Sample Author",
   availability = "sell",
 }) => {
+  const navigate =useNavigate()
   return (
-    <div className="max-w-[200px] w-full group transition-transform transform hover:scale-105 cursor-pointer">
+    <div
+      className="max-w-[200px] w-full group transition-transform transform hover:scale-105 cursor-pointer"
+      onClick={() => navigate(`/book/${id}`)}
+    >
       <div className="relative">
         <img
           src={img}

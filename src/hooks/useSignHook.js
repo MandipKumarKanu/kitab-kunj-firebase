@@ -1,5 +1,6 @@
 import {
   createUserWithEmailAndPassword,
+  sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -9,8 +10,7 @@ import { collection, doc, setDoc, getDoc } from "firebase/firestore";
 
 export const useSignUpHook = async (data) => {
   // console.log("Signup data:", data);
-  delete data.confirmPassword;
-  delete data.password;
+
   try {
     const resp = await createUserWithEmailAndPassword(
       auth,
@@ -22,6 +22,9 @@ export const useSignUpHook = async (data) => {
       await updateProfile(auth.currentUser, { displayName: data.name });
       const userCollection = collection(db, "users");
 
+      delete data.confirmPassword;
+      delete data.password;
+
       await setDoc(doc(userCollection, resp.user.uid), {
         ...data,
         credit: 1000,
@@ -32,6 +35,7 @@ export const useSignUpHook = async (data) => {
         sold: 0,
         rented: 0,
         donated: 0,
+        wishlist:[],
       });
     }
   } catch (err) {
@@ -39,7 +43,7 @@ export const useSignUpHook = async (data) => {
   }
 };
 
-export const useSignInHook = async (data, updatedUser, navigate) => {
+export const useSignInHook = async (data, updatedUser) => {
   try {
     const resp = await signInWithEmailAndPassword(
       auth,
@@ -47,7 +51,13 @@ export const useSignInHook = async (data, updatedUser, navigate) => {
       data.password
     );
 
-    console.log("Sign-in response:", resp);
+    const user = resp.user;
+
+    console.log(user)
+
+    if (user) {
+      await sendEmailVerification(user);
+    }
 
     if (resp.user.uid) {
       const userDoc = await getDoc(doc(collection(db, "users"), resp.user.uid));
@@ -57,8 +67,9 @@ export const useSignInHook = async (data, updatedUser, navigate) => {
 
         updatedUser(userData);
       }
-      navigate(-1);
     }
+
+    return user
   } catch (err) {
     console.log("Sign-in error:", err);
   }

@@ -12,11 +12,16 @@ import {
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { RWebShare } from "react-web-share";
 import { useLocation, useParams } from "react-router-dom";
-import { db } from "../config/firebase.config";
+import { auth, db } from "../config/firebase.config";
 import { doc, getDoc } from "firebase/firestore";
 import Magnifier from "react18-image-magnifier";
+import ShrinkDescription from "./utils/ShrinkDescription";
+import { fetchWishlistStatus, toggleWishlist } from "../hooks/Wishlist.Hook";
 
 const BookDesc = () => {
+  const currentUser = auth.currentUser;
+  const { uid } = currentUser;
+
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [book, setBook] = useState(null);
   const { id } = useParams();
@@ -24,6 +29,7 @@ const BookDesc = () => {
 
   useEffect(() => {
     fetchBook();
+    checkWishlistStatus();
   }, [id]);
 
   const fetchBook = async () => {
@@ -41,6 +47,16 @@ const BookDesc = () => {
     }
   };
 
+  const checkWishlistStatus = async () => {
+    const wishlisted = await fetchWishlistStatus(uid, id);
+    setIsWishlisted(wishlisted);
+  };
+
+  const handleWishlist = async () => {
+    await toggleWishlist(uid, id);
+    setIsWishlisted(!isWishlisted);
+  };
+
   const currentUrl = `${window.location.origin}${location.pathname}`;
 
   const formatPrice = (price) => {
@@ -50,38 +66,26 @@ const BookDesc = () => {
     }).format(price);
   };
 
-  const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-  };
-
   if (!book) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="container mx-auto mt-5 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-20  ">
         <div>
           <div className="sticky top-8 w-full h-96 sm:h-[680px] flex-shrink-0 overflow-hidden rounded-lg">
-            {/* <img
-              src={book.images[0]}
-              loading="lazy"
-              alt={book.title}
-              className="w-full shadow-lg h-full object-cover rounded-lg"
-            /> */}
             <Magnifier
               src={book.images[0]}
-              // mgWidth={200}
-              // mgHeight={200}
-              zoomFactor={1.25}
+              zoomFactor={1.65}
               alt={book.title}
-              // className="rounded-lg overflow-hidden object-cover"
-              className="w-full shadow-lg h-full overflow-hidden object-cover"
+              className="w-full shadow-lg h-full object-cover"
               style={{
+                width: "100%",
+                height: "auto",
                 objectFit: "cover",
                 display: "block",
                 cursor: "crosshair",
-                height: "100%",
               }}
             />
           </div>
@@ -125,11 +129,11 @@ const BookDesc = () => {
               <div className="flex space-x-4">
                 <button
                   onClick={handleWishlist}
-                  className="p-2 text-gray-500 hover:text-red-500 transition-colors duration-200"
+                  className="p-2 text-gray-500 hover:text-red-400 transition-colors duration-200"
                 >
                   <FontAwesomeIcon
                     icon={isWishlisted ? faHeartSolid : faHeartRegular}
-                    className="text-2xl"
+                    className={`${isWishlisted && "text-red-500"} text-2xl`}
                   />
                 </button>
                 <RWebShare
@@ -191,12 +195,14 @@ const BookDesc = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Description
             </h2>
-            <p className="text-gray-600 leading-relaxed">{book.description}</p>
+            <p className="text-gray-600 leading-relaxed">
+              <ShrinkDescription desc={book.description} size={300} />
+            </p>
           </div>
         </div>
 
         <div>
-          <div className="bg-gray-50 rounded-lg p-6">
+          <div className="bg-green-50 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Product Details
             </h2>

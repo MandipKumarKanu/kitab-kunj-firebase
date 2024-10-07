@@ -21,6 +21,8 @@ import ViewApprovedBooks from "./components/admin/ViewApprovedBooks";
 import PendingApproval from "./components/admin/PendingApproval";
 import ViewDeclinedBooks from "./components/admin/ViewDeclinedBooks";
 import BookDesc from "./components/BookDesc";
+import SearchPage from "./components/SearchPage";
+import useResetScrollPosition from "./hooks/useResetScrollPosition";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -28,6 +30,7 @@ const App = () => {
   const location = useLocation();
   const { pathname } = location;
 
+  useResetScrollPosition(location);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -68,6 +71,7 @@ const App = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/addbook" element={<AddBook />} />
         <Route path="/book/:id" element={<BookDesc />} />
+        <Route path="/search" element={<SearchPage />} />
 
         <Route element={<AdminLayout />}>
           <Route path="/admin/home" element={<AdminDashboard />} />

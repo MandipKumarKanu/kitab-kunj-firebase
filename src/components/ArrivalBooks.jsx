@@ -25,7 +25,7 @@ const ArrivalBooks = () => {
       const q = query(
         booksRef,
         where("availability", "!=", "donation"),
-        orderBy("postedAt", "asc"),
+        orderBy("postedAt", "desc"),
         limit(6)
       );
       const querySnapshot = await getDocs(q);
