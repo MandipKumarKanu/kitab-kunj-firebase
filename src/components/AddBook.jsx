@@ -173,7 +173,6 @@ const AddBook = () => {
         images: [imageUrl],
         availability: data.bookFor,
         postedAt: Timestamp.now(),
-        // status: "pending"
       };
 
       switch (data.bookFor) {

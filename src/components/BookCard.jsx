@@ -1,5 +1,6 @@
 import React from "react";
 import PrimaryBtn from "./PrimaryBtn";
+import { useNavigate } from "react-router-dom";
 
 const BookCard = ({
   id = 69,
@@ -11,6 +12,7 @@ const BookCard = ({
   condition = "like new",
   availability,
 }) => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 w-full bg-white rounded-xl shadow-none hover:shadow-md transition-shadow duration-300">
       <div className="w-full sm:w-48 h-48 sm:h-64 flex-shrink-0">
@@ -45,6 +47,7 @@ const BookCard = ({
           <PrimaryBtn
             name={availability !== "donation" ? "Buy Now" : "View Book"}
             style="max-w-[165px]"
+            onClick={() => navigate(`/book/${id}`)}
           />
         </div>
       </div>
