@@ -4,7 +4,7 @@ import { useAuth } from "./context/AuthContext";
 const ProfileBooks = () => {
   const [activeTab, setActiveTab] = useState("bought");
   const { user } = useAuth();
-  console.log("user", user);
+  // console.log("user", user);
 
   const tabs = [
     { name: "Bought", value: "bought", count: user?.purchased || 0 },

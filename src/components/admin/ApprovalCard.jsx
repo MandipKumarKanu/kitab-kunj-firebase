@@ -10,7 +10,16 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
-const ApprovalCard = ({ book, onApprove, onDecline, onViewDetails }) => {
+const ApprovalCard = ({
+  book,
+  onApprove,
+  onDecline,
+  onViewDetails,
+  onRemove,
+  showApproval = true,
+  showDecline = true,
+  onDelete,
+}) => {
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -96,20 +105,28 @@ const ApprovalCard = ({ book, onApprove, onDecline, onViewDetails }) => {
           <FontAwesomeIcon icon={faEye} className="h-5 w-5 mr-2" />
           <span className="font-medium">View Details</span>
         </button>
-        <button
-          onClick={onApprove}
-          className="w-full flex h-10 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors duration-200 text-xs sm:text-sm"
-        >
-          <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
-          <span className="font-medium">Approve</span>
-        </button>
-        <button
-          onClick={onDecline}
-          className="w-full flex h-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200 text-xs sm:text-sm"
-        >
-          <FontAwesomeIcon icon={faXmark} className="h-5 w-5 mr-2" />
-          <span className="font-medium">Decline</span>
-        </button>
+
+        {showApproval && (
+          <button
+            onClick={onApprove}
+            className="w-full flex h-10 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors duration-200 text-xs sm:text-sm"
+          >
+            <FontAwesomeIcon icon={faCheck} className="h-5 w-5 mr-2" />
+            <span className="font-medium">Approve</span>
+          </button>
+        )}
+
+        {showDecline && (
+          <button
+            onClick={onDecline || onRemove || onDelete}
+            className="w-full flex h-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200 text-xs sm:text-sm"
+          >
+            <FontAwesomeIcon icon={faXmark} className="h-5 w-5 mr-2" />
+            <span className="font-medium">
+              {onDelete ? "Delete" : "Decline"}
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

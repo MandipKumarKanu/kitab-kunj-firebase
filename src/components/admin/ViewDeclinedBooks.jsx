@@ -5,6 +5,9 @@ import {
   getDoc,
   deleteDoc,
   addDoc,
+  setDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import ApprovalCard from "./ApprovalCard";
@@ -13,7 +16,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
 
-const ViewApprovedBooks = () => {
+const ViewDeclinedBooks = () => {
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -25,13 +28,13 @@ const ViewApprovedBooks = () => {
   });
 
   useEffect(() => {
-    fetchApprovedBooks();
+    fetchDeclinedBooks();
   }, []);
 
-  const fetchApprovedBooks = async () => {
+  const fetchDeclinedBooks = async () => {
     try {
-      const approvedBooksRef = collection(db, "approvedBooks");
-      const querySnapshot = await getDocs(approvedBooksRef);
+      const declinedBooksRef = collection(db, "declinedBooks");
+      const querySnapshot = await getDocs(declinedBooksRef);
       const fetchedBooks = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
           const data = doc.data();
@@ -41,7 +44,7 @@ const ViewApprovedBooks = () => {
       );
       setBooks(fetchedBooks);
     } catch (error) {
-      console.error("Error fetching pending books:", error);
+      console.error("Error fetching declined books:", error);
     } finally {
       setLoading(false);
     }
@@ -58,44 +61,38 @@ const ViewApprovedBooks = () => {
     }
   };
 
-  const handleRemove = async (bookId, sellerId) => {
+  const handleDelete = async (bookId) => {
     try {
-      const bookRef = doc(db, "approvedBooks", bookId);
-      const bookDoc = await getDoc(bookRef);
-      const bookData = bookDoc.data();
+      const collectionRef = collection(db, "declinedBooks");
+      const q = query(collectionRef, where("id", "==", bookId));
+      const querySnapshot = await getDocs(q);
 
-      await addDoc(collection(db, "declinedBooks"), {
-        ...bookData,
-        removedAt: new Date(),
-      });
-
-      await deleteDoc(bookRef);
-
-      await sendNotification(
-        sellerId || selectedBook.sellerId,
-        `Your book "${bookData.title}" has been removed.`,
-        bookData.title,
-        "removed"
-      );
-
-      removeBook(bookId);
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach(async (docSnapshot) => {
+          const bookRef = doc(db, "declinedBooks", docSnapshot.id);
+          await deleteDoc(bookRef);
+          console.log(
+            `Document with ID: ${docSnapshot.id} deleted successfully.`
+          );
+          removeBook(bookId);
+        });
+      } else {
+        console.log("No document found with the specified field value.");
+      }
     } catch (error) {
-      console.error("Error declining book:", error);
+      console.error("Error deleting book:", error);
     }
   };
 
-  const sendNotification = async (sellerId, message, bookTitle, status) => {
+  const handleApprove = async (book) => {
     try {
-      await addDoc(collection(db, "notification"), {
-        sellerId,
-        message,
-        bookTitle,
-        status,
-        timestamp: new Date(),
-        read: false,
-      });
+      const approvedBookRef = doc(db, "approvedBooks", book.id);
+      await setDoc(approvedBookRef, book);
+      //   await deleteDoc(doc(db, "declinedBooks", book.id));
+      //   removeBook(book.id);
+      handleDelete(book.id);
     } catch (error) {
-      console.error("Error sending notification:", error);
+      console.error("Error approving book:", error);
     }
   };
 
@@ -103,20 +100,6 @@ const ViewApprovedBooks = () => {
     setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
     setDialogOpen(false);
     setSelectedBook(null);
-  };
-
-  const handleConfirmation = (action, bookId) => {
-    setConfirmationDialog({ open: true, action, book: { ...bookId } });
-  };
-
-  const confirmAction = async () => {
-    if (confirmationDialog.action === "remove") {
-      await handleRemove(
-        confirmationDialog.book.id,
-        confirmationDialog.book.sellerId
-      );
-    }
-    setConfirmationDialog({ open: false, action: null, bookId: null });
   };
 
   const handleViewDetails = (book) => {
@@ -138,7 +121,7 @@ const ViewApprovedBooks = () => {
 
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Approved Books</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-800">Declined Books</h1>
 
       {loading ? (
         <div className="text-center text-gray-500">Loading...</div>
@@ -148,9 +131,9 @@ const ViewApprovedBooks = () => {
             <ApprovalCard
               key={book.id}
               book={book}
-              onRemove={() => handleConfirmation("remove", book)}
+              onDelete={() => handleDelete(book.id)}
+              onApprove={() => handleApprove(book)}
               onViewDetails={() => handleViewDetails(book)}
-              showApproval={false}
             />
           ))}
         </div>
@@ -215,10 +198,6 @@ const ViewApprovedBooks = () => {
                     selectedBook.postedAt.toDate()
                   ).toLocaleDateString()}
                 </p>
-                <p>
-                  <span className="font-semibold">Status:</span>{" "}
-                  {selectedBook.status === "approved" ? "Approved" : "Removed"}
-                </p>
               </div>
             </div>
 
@@ -252,10 +231,16 @@ const ViewApprovedBooks = () => {
 
             <div className="mt-8 flex justify-end gap-4">
               <button
-                onClick={() => handleRemove(selectedBook.id)}
+                onClick={() => handleApprove(selectedBook)}
+                className="px-8 h-10 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition duration-200"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => handleDelete(selectedBook.id)}
                 className="px-8 h-10 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition duration-200"
               >
-                Remove
+                Delete
               </button>
             </div>
           </div>
@@ -266,23 +251,28 @@ const ViewApprovedBooks = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl transition-all transform scale-100">
             <h2 className="text-lg font-semibold text-gray-800">
-              Confirm Remove
+              Confirm Deletion
             </h2>
             <p className="mt-2 text-gray-700">
-              Are you sure you want to remove this book?
+              Are you sure you want to delete this book?
             </p>
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setConfirmationDialog({ open: false })}
-                className="px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400 transition duration-200"
+                className="mr-4 px-4 h-10 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition duration-200"
               >
                 Cancel
               </button>
               <button
-                onClick={confirmAction}
-                className="ml-2 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition duration-200"
+                onClick={() => {
+                  if (confirmationDialog.action === "delete") {
+                    handleDelete(confirmationDialog.bookId);
+                  }
+                  setConfirmationDialog({ open: false });
+                }}
+                className="px-4 h-10 rounded-lg bg-red-500 text-white hover:bg-red-600 transition duration-200"
               >
-                Confirm
+                Delete
               </button>
             </div>
           </div>
@@ -292,4 +282,4 @@ const ViewApprovedBooks = () => {
   );
 };
 
-export default ViewApprovedBooks;
+export default ViewDeclinedBooks;

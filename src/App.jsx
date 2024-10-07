@@ -19,6 +19,7 @@ import AdminLayout from "./components/admin/layout/AdminLayout";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import ViewApprovedBooks from "./components/admin/ViewApprovedBooks";
 import PendingApproval from "./components/admin/PendingApproval";
+import ViewDeclinedBooks from "./components/admin/ViewDeclinedBooks";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -70,6 +71,7 @@ const App = () => {
           <Route path="/admin/home" element={<AdminDashboard />} />
           <Route path="/admin/toapprove" element={<PendingApproval />} />
           <Route path="/admin/approvedbooks" element={<ViewApprovedBooks />} />
+          <Route path="/admin/declineddbooks" element={<ViewDeclinedBooks />} />
         </Route>
       </Routes>
       <GotoTop />
