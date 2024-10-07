@@ -15,7 +15,7 @@ const RentPage = () => {
 
   const fetchBookForRent = async () => {
     try {
-      const booksRef = collection(db, "books");
+      const booksRef = collection(db, "approvedBooks");
       const q = query(
         booksRef,
         where("availability", "==", "rent"),

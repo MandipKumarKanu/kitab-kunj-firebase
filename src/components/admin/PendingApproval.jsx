@@ -1,4 +1,11 @@
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  deleteDoc,
+  addDoc,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import ApprovalCard from "./ApprovalCard";
 import { db } from "../../config/firebase.config";
@@ -11,15 +18,20 @@ const PendingApproval = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [confirmationDialog, setConfirmationDialog] = useState({
+    open: false,
+    action: null,
+    bookId: null,
+  });
 
   useEffect(() => {
-    fetchHiddenBooks();
+    fetchPendingBooks();
   }, []);
 
-  const fetchHiddenBooks = async () => {
+  const fetchPendingBooks = async () => {
     try {
-      const hiddenBooksRef = collection(db, "books");
-      const querySnapshot = await getDocs(hiddenBooksRef);
+      const pendingBooksRef = collection(db, "books");
+      const querySnapshot = await getDocs(pendingBooksRef);
       const fetchedBooks = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
           const data = doc.data();
@@ -29,7 +41,7 @@ const PendingApproval = () => {
       );
       setBooks(fetchedBooks);
     } catch (error) {
-      console.error("Error fetching hidden books:", error);
+      console.error("Error fetching pending books:", error);
     } finally {
       setLoading(false);
     }
@@ -46,12 +58,99 @@ const PendingApproval = () => {
     }
   };
 
-  const handleApprove = (bookId) => {
-    console.log("Approve book:", bookId);
+  const handleApprove = async (bookId, sellerId) => {
+    try {
+      const bookRef = doc(db, "books", bookId);
+      const bookDoc = await getDoc(bookRef);
+      const bookData = bookDoc.data();
+
+      await addDoc(collection(db, "approvedBooks"), {
+        ...bookData,
+        approvedAt: new Date(),
+      });
+
+      await deleteDoc(bookRef);
+
+      await sendNotification(
+        sellerId || selectedBook.sellerId,
+        `Your book "${bookData.title}" has been approved.`,
+        bookData.title,
+        "approved"
+      );
+
+      removeBook(bookId);
+      console.log("Book approved and moved:", bookId);
+    } catch (error) {
+      console.error("Error approving book:", error);
+    }
   };
 
-  const handleDelete = (bookId) => {
-    console.log("Delete book:", bookId);
+  const handleDecline = async (bookId, sellerId) => {
+    try {
+      const bookRef = doc(db, "books", bookId);
+      const bookDoc = await getDoc(bookRef);
+      const bookData = bookDoc.data();
+
+      await addDoc(collection(db, "declinedBooks"), {
+        ...bookData,
+        declinedAt: new Date(),
+      });
+
+      await deleteDoc(bookRef);
+
+      await sendNotification(
+        sellerId || selectedBook.sellerId,
+        `Your book "${bookData.title}" has been declined.`,
+        bookData.title,
+        "declined"
+      );
+
+      removeBook(bookId);
+      console.log("Book declined and moved:", bookId);
+    } catch (error) {
+      console.error("Error declining book:", error);
+    }
+  };
+
+  const sendNotification = async (sellerId, message, bookTitle, status) => {
+    try {
+      await addDoc(collection(db, "notification"), {
+        sellerId,
+        message,
+        bookTitle,
+        status,
+        timestamp: new Date(),
+        read: false,
+      });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  };
+
+  const removeBook = (bookId) => {
+    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
+    setDialogOpen(false);
+    setSelectedBook(null);
+  };
+
+  const handleConfirmation = (action, bookId) => {
+    setConfirmationDialog({ open: true, action, book: { ...bookId } });
+  };
+
+  const confirmAction = async () => {
+    console.log(confirmationDialog);
+    if (confirmationDialog.action === "approve") {
+      await handleApprove(
+        confirmationDialog.book.id,
+        confirmationDialog.book.sellerId
+      );
+    } else if (confirmationDialog.action === "decline") {
+      await handleDecline(
+        confirmationDialog.book.id,
+        confirmationDialog.book.sellerId
+      );
+    }
+    setConfirmationDialog({ open: false, action: null, bookId: null });
   };
 
   const handleViewDetails = (book) => {
@@ -85,13 +184,14 @@ const PendingApproval = () => {
             <ApprovalCard
               key={book.id}
               book={book}
-              onApprove={() => handleApprove(book.id)}
-              onDelete={() => handleDelete(book.id)}
+              onApprove={() => handleConfirmation("approve", book)}
+              onDecline={() => handleConfirmation("decline", book)}
               onViewDetails={() => handleViewDetails(book)}
             />
           ))}
         </div>
       )}
+
       {isDialogOpen && selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-[#fff] rounded-lg p-6 max-w-3xl w-full shadow-xl transition-all transform scale-100">
@@ -151,6 +251,10 @@ const PendingApproval = () => {
                     selectedBook.postedAt.toDate()
                   ).toLocaleDateString()}
                 </p>
+                <p>
+                  <span className="font-semibold">Status:</span>{" "}
+                  {selectedBook.status === "approved" ? "Approved" : "Declined"}
+                </p>
               </div>
             </div>
 
@@ -185,15 +289,43 @@ const PendingApproval = () => {
             <div className="mt-8 flex justify-end gap-4">
               <button
                 onClick={() => handleApprove(selectedBook.id)}
-                className="px-8 h-10 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors duration-200 "
+                className="px-8 h-10 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition duration-200"
               >
                 Approve
               </button>
               <button
-                onClick={() => handleDelete(selectedBook.id)}
-                className="px-8 h-10  rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors duration-200 "
+                onClick={() => handleDecline(selectedBook.id)}
+                className="px-8 h-10 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition duration-200"
               >
-                Delete
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmationDialog.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+            <h2 className="text-lg font-bold mb-4">
+              Are you sure you want to{" "}
+              {confirmationDialog.action === "approve" ? "approve" : "decline"}{" "}
+              this book?
+            </h2>
+            <div className="flex justify-between">
+              <button
+                onClick={confirmAction}
+                className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() =>
+                  setConfirmationDialog({ ...confirmationDialog, open: false })
+                }
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                No
               </button>
             </div>
           </div>

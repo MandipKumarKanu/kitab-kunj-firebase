@@ -15,7 +15,7 @@ const BuyPage = () => {
 
   const fetchBookForSell = async () => {
     try {
-      const booksRef = collection(db, "books");
+      const booksRef = collection(db, "approvedBooks");
       const q = query(
         booksRef,
         where("availability", "==", "sell"),

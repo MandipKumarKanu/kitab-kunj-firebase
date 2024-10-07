@@ -14,7 +14,7 @@ const FeaturedBook = () => {
 
   const fetchLatestBooks = async () => {
     try {
-      const booksRef = collection(db, "books");
+      const booksRef = collection(db, "approvedBooks");
       const q = query(
         booksRef,
         where("availability", "==", "sell"),

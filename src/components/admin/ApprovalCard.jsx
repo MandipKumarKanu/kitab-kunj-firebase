@@ -10,7 +10,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
-const ApprovalCard = ({ book, onApprove, onDelete, onViewDetails }) => {
+const ApprovalCard = ({ book, onApprove, onDecline, onViewDetails }) => {
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -104,11 +104,11 @@ const ApprovalCard = ({ book, onApprove, onDelete, onViewDetails }) => {
           <span className="font-medium">Approve</span>
         </button>
         <button
-          onClick={onDelete}
+          onClick={onDecline}
           className="w-full flex h-10 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-200 text-xs sm:text-sm"
         >
           <FontAwesomeIcon icon={faXmark} className="h-5 w-5 mr-2" />
-          <span className="font-medium">Delete</span>
+          <span className="font-medium">Decline</span>
         </button>
       </div>
     </div>

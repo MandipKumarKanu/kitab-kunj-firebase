@@ -17,7 +17,7 @@ const AllBooks = () => {
 
   const fetchAllBook = async () => {
     try {
-      const booksRef = collection(db, "books");
+      const booksRef = collection(db, "approvedBooks");
       // let q;
 
       // if (filter === "all") {
