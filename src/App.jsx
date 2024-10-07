@@ -66,7 +66,7 @@ const App = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/addbook" element={<AddBook />} />
 
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route element={<AdminLayout />}>
           <Route path="/admin/home" element={<AdminDashboard />} />
           <Route path="/admin/toapprove" element={<PendingApproval />} />
           <Route path="/admin/approvedbooks" element={<ViewApprovedBooks />} />
