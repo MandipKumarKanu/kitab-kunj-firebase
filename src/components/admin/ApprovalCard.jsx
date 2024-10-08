@@ -103,7 +103,7 @@ const ApprovalCard = ({
           className="w-full flex h-10 px-4 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-200 text-xs sm:text-sm"
         >
           <FontAwesomeIcon icon={faEye} className="h-5 w-5 mr-2" />
-          <span className="font-medium">View Details</span>
+          <span className="font-medium">View </span>
         </button>
 
         {showApproval && (

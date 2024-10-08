@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-purple-600 text-white z-50 rounded-t-3xl mt-8 md:mt-0 ">
+    <footer className="bg-primaryColor text-white z-50 rounded-t-3xl mt-8 md:mt-0 ">
       <div className="flex flex-col md:flex-row justify-between p-8 md:px-32 px-5">
         <div>
           <h1 className="font-semibold text-3xl pb-4">Kitab Kunj</h1>

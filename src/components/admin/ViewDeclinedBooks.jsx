@@ -62,22 +62,17 @@ const ViewDeclinedBooks = () => {
   };
 
   const handleDelete = async (bookId) => {
+    console.log(bookId);
     try {
-      const collectionRef = collection(db, "declinedBooks");
-      const q = query(collectionRef, where("id", "==", bookId));
-      const querySnapshot = await getDocs(q);
+      const bookRef = doc(db, "declinedBooks", bookId);
+      const docSnapshot = await getDoc(bookRef);
 
-      if (!querySnapshot.empty) {
-        querySnapshot.forEach(async (docSnapshot) => {
-          const bookRef = doc(db, "declinedBooks", docSnapshot.id);
-          await deleteDoc(bookRef);
-          console.log(
-            `Document with ID: ${docSnapshot.id} deleted successfully.`
-          );
-          removeBook(bookId);
-        });
+      if (docSnapshot.exists()) {
+        await deleteDoc(bookRef);
+        console.log(`Document with ID: ${bookId} deleted successfully.`);
+        removeBook(bookId);
       } else {
-        console.log("No document found with the specified field value.");
+        console.log("No document found with the specified ID.");
       }
     } catch (error) {
       console.error("Error deleting book:", error);
@@ -85,11 +80,10 @@ const ViewDeclinedBooks = () => {
   };
 
   const handleApprove = async (book) => {
+    console.log(book)
     try {
       const approvedBookRef = doc(db, "approvedBooks", book.id);
       await setDoc(approvedBookRef, book);
-      //   await deleteDoc(doc(db, "declinedBooks", book.id));
-      //   removeBook(book.id);
       handleDelete(book.id);
     } catch (error) {
       console.error("Error approving book:", error);

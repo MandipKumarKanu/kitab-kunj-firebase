@@ -5,12 +5,13 @@ import {
   getDoc,
   deleteDoc,
   addDoc,
+  setDoc,
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import ApprovalCard from "./ApprovalCard";
 import { db } from "../../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
 
 const PendingApproval = () => {
@@ -23,6 +24,12 @@ const PendingApproval = () => {
     action: null,
     bookId: null,
   });
+  const [feedbackDialog, setFeedbackDialog] = useState({
+    open: false,
+    bookId: null,
+    sellerId: null,
+  });
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     fetchPendingBooks();
@@ -59,12 +66,16 @@ const PendingApproval = () => {
   };
 
   const handleApprove = async (bookId, sellerId) => {
+    // Optimistic update
+    const bookToApprove = books.find((book) => book.id === bookId);
+    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
+
     try {
       const bookRef = doc(db, "pendingBooks", bookId);
       const bookDoc = await getDoc(bookRef);
       const bookData = bookDoc.data();
 
-      await addDoc(collection(db, "approvedBooks"), {
+      await setDoc(doc(db, "approvedBooks", bookId), {
         ...bookData,
         approvedAt: new Date(),
       });
@@ -75,26 +86,42 @@ const PendingApproval = () => {
         sellerId || selectedBook.sellerId,
         `Your book "${bookData.title}" has been approved.`,
         bookData.title,
-        "approved"
+        "approved",
+        bookId
       );
 
-      removeBook(bookId);
       console.log("Book approved and moved:", bookId);
     } catch (error) {
       console.error("Error approving book:", error);
+      // Revert optimistic update on error
+      setBooks((prevBooks) => [...prevBooks, bookToApprove]);
     }
+
+    setDialogOpen(false);
+    setSelectedBook(null);
   };
 
   const handleDecline = async (bookId, sellerId) => {
+    // Open feedback dialog
+    setFeedbackDialog({ open: true, bookId, sellerId });
+  };
+
+  const submitDeclineWithFeedback = async () => {
+    const { bookId, sellerId } = feedbackDialog;
+
+    // Optimistic update
+    const bookToDecline = books.find((book) => book.id === bookId);
+    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
+
     try {
       const bookRef = doc(db, "pendingBooks", bookId);
       const bookDoc = await getDoc(bookRef);
       const bookData = bookDoc.data();
-      console.log(bookData);
 
-      await addDoc(collection(db, "declinedBooks"), {
+      await setDoc(doc(db, "declinedBooks", bookId), {
         ...bookData,
         declinedAt: new Date(),
+        feedback: feedback,
       });
 
       await deleteDoc(bookRef);
@@ -103,19 +130,32 @@ const PendingApproval = () => {
         sellerId || selectedBook.sellerId,
         `Your book "${bookData.title}" has been declined.`,
         bookData.title,
-        "declined"
+        "declined",
+        bookId
       );
 
-      removeBook(bookId);
       console.log("Book declined and moved:", bookId);
     } catch (error) {
       console.error("Error declining book:", error);
+      // Revert optimistic update on error
+      setBooks((prevBooks) => [...prevBooks, bookToDecline]);
     }
+
+    setFeedbackDialog({ open: false, bookId: null, sellerId: null });
+    setFeedback("");
+    setDialogOpen(false);
+    setSelectedBook(null);
   };
 
-  const sendNotification = async (sellerId, message, bookTitle, status) => {
+  const sendNotification = async (
+    sellerId,
+    message,
+    bookTitle,
+    status,
+    bookId
+  ) => {
     try {
-      await addDoc(collection(db, "notification"), {
+      await setDoc(doc(db, "notification", bookId), {
         sellerId,
         message,
         bookTitle,
@@ -128,18 +168,11 @@ const PendingApproval = () => {
     }
   };
 
-  const removeBook = (bookId) => {
-    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
-    setDialogOpen(false);
-    setSelectedBook(null);
-  };
-
-  const handleConfirmation = (action, bookId) => {
-    setConfirmationDialog({ open: true, action, book: { ...bookId } });
+  const handleConfirmation = (action, book) => {
+    setConfirmationDialog({ open: true, action, book });
   };
 
   const confirmAction = async () => {
-    console.log(confirmationDialog);
     if (confirmationDialog.action === "approve") {
       await handleApprove(
         confirmationDialog.book.id,
@@ -151,7 +184,7 @@ const PendingApproval = () => {
         confirmationDialog.book.sellerId
       );
     }
-    setConfirmationDialog({ open: false, action: null, bookId: null });
+    setConfirmationDialog({ open: false, action: null, book: null });
   };
 
   const handleViewDetails = (book) => {
@@ -193,6 +226,7 @@ const PendingApproval = () => {
         </div>
       )}
 
+      {/* Book Details Dialog */}
       {isDialogOpen && selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
           <div className="bg-[#fff] rounded-lg p-6 max-w-3xl w-full shadow-xl transition-all transform scale-100">
@@ -289,13 +323,17 @@ const PendingApproval = () => {
 
             <div className="mt-8 flex justify-end gap-4">
               <button
-                onClick={() => handleApprove(selectedBook.id)}
+                onClick={() =>
+                  handleApprove(selectedBook.id, selectedBook.sellerId)
+                }
                 className="px-8 h-10 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition duration-200"
               >
                 Approve
               </button>
               <button
-                onClick={() => handleDecline(selectedBook.id)}
+                onClick={() =>
+                  handleDecline(selectedBook.id, selectedBook.sellerId)
+                }
                 className="px-8 h-10 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition duration-200"
               >
                 Decline
@@ -305,6 +343,7 @@ const PendingApproval = () => {
         </div>
       )}
 
+      {/* Confirmation Dialog */}
       {confirmationDialog.open && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl transform scale-100 animate-in zoom-in-95 duration-200">
@@ -320,8 +359,8 @@ const PendingApproval = () => {
                   <FontAwesomeIcon
                     icon={
                       confirmationDialog.action === "approve"
-                        ? "check-circle"
-                        : "times-circle"
+                        ? faCheck
+                        : faTimes
                     }
                     className="text-xl"
                   />
@@ -372,13 +411,51 @@ const PendingApproval = () => {
               >
                 <FontAwesomeIcon
                   icon={
-                    confirmationDialog.action === "approve" ? "check" : "times"
+                    confirmationDialog.action === "approve" ? faCheck : faTimes
                   }
                   className="mr-2"
                 />
                 {confirmationDialog.action === "approve"
                   ? "Approve"
                   : "Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Dialog */}
+      {feedbackDialog.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl transform scale-100 animate-in zoom-in-95 duration-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Provide Feedback (Optional)
+            </h2>
+            <textarea
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="4"
+              placeholder="Enter feedback for the seller (optional)"
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+            ></textarea>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() =>
+                  setFeedbackDialog({
+                    open: false,
+                    bookId: null,
+                    sellerId: null,
+                  })
+                }
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitDeclineWithFeedback}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Decline Book
               </button>
             </div>
           </div>

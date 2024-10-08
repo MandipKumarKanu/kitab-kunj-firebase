@@ -44,7 +44,7 @@ const Sidebar = () => {
             Approved Books
           </NavLink>
         </li>
-        <li className="mb-2">
+        {/* <li className="mb-2">
           <NavLink
             to="/admin/declineddbooks"
             className={({ isActive }) =>
@@ -55,7 +55,7 @@ const Sidebar = () => {
           >
             Declined Books
           </NavLink>
-        </li>
+        </li> */}
       </ul>
     </div>
   );

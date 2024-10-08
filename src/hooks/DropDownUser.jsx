@@ -97,12 +97,12 @@ const DropdownUser = () => {
 
             <li>
               <Link
-                to="/myOrders"
+                to="/myapproved"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
                 <FontAwesomeIcon icon={faBoxOpen} size="lg" />
-                My Orders
+                My Books
               </Link>
             </li>
           </ul>

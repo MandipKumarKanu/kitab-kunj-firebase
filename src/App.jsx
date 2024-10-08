@@ -24,6 +24,7 @@ import BookDesc from "./components/BookDesc";
 import SearchPage from "./components/SearchPage";
 import useResetScrollPosition from "./hooks/useResetScrollPosition";
 import Footer from "./components/Footer";
+import MyBooks from "./components/MyBooks";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -63,26 +64,36 @@ const App = () => {
   return (
     <>
       {!pathname.includes("/admin") && <Navbar />}
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/allbooks" element={<AllBooks />} />
-        <Route path="/sellbooks" element={<BuyPage />} />
-        <Route path="/rentbook" element={<RentPage />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/addbook" element={<AddBook />} />
-        <Route path="/book/:id" element={<BookDesc />} />
-        <Route path="/search" element={<SearchPage />} />
+      <div className="min-h-[100dvh]">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/allbooks" element={<AllBooks />} />
+          <Route path="/sellbooks" element={<BuyPage />} />
+          <Route path="/rentbook" element={<RentPage />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/myapproved" element={<MyBooks />} />
+          <Route path="/addbook" element={<AddBook />} />
+          <Route path="/book/:id" element={<BookDesc />} />
+          <Route path="/search" element={<SearchPage />} />
 
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/home" element={<AdminDashboard />} />
-          <Route path="/admin/toapprove" element={<PendingApproval />} />
-          <Route path="/admin/approvedbooks" element={<ViewApprovedBooks />} />
-          <Route path="/admin/declineddbooks" element={<ViewDeclinedBooks />} />
-        </Route>
-      </Routes>
-      <Footer/>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/home" element={<AdminDashboard />} />
+            <Route path="/admin/toapprove" element={<PendingApproval />} />
+            <Route
+              path="/admin/approvedbooks"
+              element={<ViewApprovedBooks />}
+            />
+            <Route
+              path="/admin/declineddbooks"
+              element={<ViewDeclinedBooks />}
+            />
+          </Route>
+        </Routes>
+      </div>
+      {/* <Footer/> */}
       <GotoTop />
+      {!pathname.includes("/admin") && <Footer />}
     </>
   );
 };
