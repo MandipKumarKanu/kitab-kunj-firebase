@@ -16,12 +16,14 @@ import {
 import { auth, db } from "../config/firebase.config";
 import HeadingText from "./Heading";
 import { formatDate } from "./utils/timeStampConversion";
+import ShrinkDescription from "./utils/ShrinkDescription";
 
 const MyBooks = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBook, setSelectedBook] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const currentUser = auth.currentUser;
 
   useEffect(() => {
@@ -57,8 +59,15 @@ const MyBooks = () => {
   };
 
   const filteredBooks = books.filter((book) => {
-    if (filter === "all") return true;
-    return book.availability === filter;
+    // Apply filter based on availability
+    const availabilityFilter = filter === "all" || book.availability === filter;
+
+    // Apply search filter (case-insensitive)
+    const searchFilter =
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return availabilityFilter && searchFilter;
   });
 
   const renderBookDetail = (icon, label, value) => (
@@ -76,6 +85,16 @@ const MyBooks = () => {
     </div>
   );
 
+  const openModal = (book) => {
+    setSelectedBook(book);
+    document.body.style.overflow = "hidden"; // Prevent background scroll
+  };
+
+  const closeModal = () => {
+    setSelectedBook(null);
+    document.body.style.overflow = "auto"; // Restore background scroll
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -92,9 +111,16 @@ const MyBooks = () => {
   return (
     <div className="container mx-auto px-4">
       <HeadingText fullName="Listed on Platform" bgName="My Books" />
-      <div className=" flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div></div>
-
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <input
+            type="text"
+            placeholder="Search by title or author..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+            className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:border-blue-500"
+          />
+        </div>
         <div className="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-sm">
           <FontAwesomeIcon icon={faFilter} className="text-blue-500" />
           <select
@@ -127,7 +153,7 @@ const MyBooks = () => {
             <div
               key={book.id}
               className="relative aspect-[5/4] cursor-pointer rounded-xl overflow-hidden"
-              onClick={() => setSelectedBook(book)}
+              onClick={() => openModal(book)}
             >
               <img
                 src={book.images[0] || "/placeholder-book.jpg"}
@@ -174,40 +200,37 @@ const MyBooks = () => {
       {selectedBook && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
-          onClick={() => setSelectedBook(null)}
+          onClick={closeModal}
         >
           <div
             className="bg-gradient-to-br from-slate-200 to-gray-100 rounded-3xl w-full max-w-5xl 
-                          shadow-2xl transform transition-all duration-500 ease-out overflow-hidden"
+                    shadow-2xl transform transition-all duration-500 ease-out overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative h-14 ">
-              <button
-                onClick={() => setSelectedBook(null)}
-                className="absolute top-4 right-6"
-              >
+            <div className="relative h-14">
+              <button onClick={closeModal} className="absolute top-4 right-6">
                 <FontAwesomeIcon icon={faTimes} size="lg" />
               </button>
             </div>
 
-            <div className="p-8 pt-2">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="space-y-6">
+            <div className="p-4 md:p-8 pt-2 max-h-[90vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div className="relative group">
                     <div
                       className="aspect-w-3 aspect-h-4 rounded-2xl overflow-hidden 
-                                    shadow-xl group-hover:shadow-2xl transition-shadow duration-300"
+                            shadow-xl group-hover:shadow-2xl transition-shadow duration-300"
                     >
                       <img
                         src={selectedBook.images[0] || "/placeholder-book.jpg"}
                         alt={selectedBook.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-[300px] md:h-[600px] object-cover"
                       />
                     </div>
                     {selectedBook.availability !== "donation" && (
                       <div
                         className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm 
-                  px-4 py-3 rounded-xl shadow-lg space-y-1"
+                    px-4 py-3 rounded-xl shadow-lg space-y-1"
                       >
                         <div className="flex items-center justify-between">
                           <p className="text-gray-500 text-sm">
@@ -229,22 +252,11 @@ const MyBooks = () => {
                               : formatPrice(selectedBook.sellingPrice)}
                           </p>
                         </div>
-                        {selectedBook.availability === "sell" &&
-                          selectedBook.originalPrice >
-                            selectedBook.sellingPrice && (
-                            <div className="text-green-600 text-xs font-medium text-right">
-                              Save{" "}
-                              {formatPrice(
-                                selectedBook.originalPrice -
-                                  selectedBook.sellingPrice
-                              )}
-                            </div>
-                          )}
                       </div>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     <div
                       className={`px-5 py-2 rounded-full font-medium ${
                         selectedBook.availability === "donation"
@@ -259,7 +271,7 @@ const MyBooks = () => {
                         selectedBook.availability.slice(1)}
                     </div>
                     <div
-                      className={`px-5 py-2 rounded-full font-medium ${
+                      className={`px-5 py-2 rounded-full font-medium capitalize ${
                         selectedBook.condition === "New"
                           ? "bg-green-100 text-green-700 border-2 border-green-200"
                           : selectedBook.condition === "Like New"
@@ -273,7 +285,7 @@ const MyBooks = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col space-y-6">
+                <div className="flex flex-col space-y-4">
                   <div>
                     <h2 className="text-3xl font-bold ">
                       {selectedBook.title}
@@ -307,7 +319,7 @@ const MyBooks = () => {
                     )}
                   </div>
 
-                  <div className="bg-white/50 backdrop-blur-sm rounded-xl p-6 shadow-sm">
+                  <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-sm">
                     <h3 className="text-xl font-semibold mb-3 flex items-center">
                       <FontAwesomeIcon
                         icon={faBook}
@@ -316,7 +328,10 @@ const MyBooks = () => {
                       Description
                     </h3>
                     <p className="text-gray-700 leading-relaxed">
-                      {selectedBook.description}
+                      <ShrinkDescription
+                        desc={selectedBook.description}
+                        size={250}
+                      />
                     </p>
                   </div>
                 </div>
