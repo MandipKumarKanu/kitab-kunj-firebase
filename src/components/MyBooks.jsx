@@ -15,7 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { auth, db } from "../config/firebase.config";
 import HeadingText from "./Heading";
-
+import { formatDate } from "./utils/timeStampConversion";
 
 const MyBooks = () => {
   const [books, setBooks] = useState([]);
@@ -90,18 +90,17 @@ const MyBooks = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4">
       <HeadingText fullName="Listed on Platform" bgName="My Books" />
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-
-       <div></div>
+      <div className=" flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div></div>
 
         <div className="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-sm">
           <FontAwesomeIcon icon={faFilter} className="text-blue-500" />
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="border-none bg-transparent focus:outline-none text-gray-700"
+            className="border-none bg-transparent focus:outline-none cursor-pointer text-gray-700"
           >
             <option value="all">All Books</option>
             <option value="sell">For Sale</option>
@@ -112,44 +111,60 @@ const MyBooks = () => {
       </div>
 
       {filteredBooks.length === 0 ? (
-        <p className="text-center text-gray-600">
-          No books available for this filter.
-        </p>
+        <div className="text-center py-12">
+          <FontAwesomeIcon
+            icon={faBook}
+            size="3x"
+            className="text-gray-400 mb-4"
+          />
+          <p className="text-xl text-gray-600">
+            No books available for this filter.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredBooks.map((book) => (
             <div
               key={book.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transform transition duration-300 hover:scale-105 flex flex-row"
+              className="relative aspect-[5/4] cursor-pointer rounded-xl overflow-hidden"
               onClick={() => setSelectedBook(book)}
             >
               <img
                 src={book.images[0] || "/placeholder-book.jpg"}
                 alt={book.title}
-                className="w-1/3 h-auto object-cover"
+                className="w-full h-full object-cover hover:object-contain"
               />
-              <div className="p-4 w-2/3 flex-grow">
-                <h2 className="text-lg font-semibold mb-2 truncate">
+
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent
+                        flex flex-col justify-end p-4"
+              >
+                <h2 className="text-white font-semibold text-lg mb-2 line-clamp-2">
                   {book.title}
                 </h2>
-                <p className="text-sm text-gray-600 mb-2">by {book.author}</p>
-                {book.availability !== "donation" && (
-                  <p className="text-sm text-blue-600 font-bold">
-                    {book.availability === "rent"
-                      ? `${formatPrice(book.perWeekPrice)} / week`
-                      : formatPrice(book.sellingPrice)}
-                  </p>
-                )}
 
-                
-                {book.availability === "donation" && (
-                  <p className="text-sm text-green-600 font-bold">
-                    Available for Donation
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-                  {book.description}
+                <p className="text-gray-300 text-sm mb-2">
+                  Posted {formatDate(book.postedAt)}
                 </p>
+
+                <div className="flex items-center">
+                  {book.availability === "donation" ? (
+                    <span className="inline-block bg-green-500 text-white text-sm px-3 py-1 rounded-full">
+                      For Donation
+                    </span>
+                  ) : (
+                    <span
+                      className={`inline-block text-white text-sm px-3 py-1 rounded-full
+                              ${
+                                book.availability === "rent"
+                                  ? "bg-blue-500"
+                                  : "bg-purple-500"
+                              }`}
+                    >
+                      For {book.availability === "rent" ? "Rent" : "Sale"}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           ))}
