@@ -23,6 +23,7 @@ import ViewDeclinedBooks from "./components/admin/ViewDeclinedBooks";
 import BookDesc from "./components/BookDesc";
 import SearchPage from "./components/SearchPage";
 import useResetScrollPosition from "./hooks/useResetScrollPosition";
+import Footer from "./components/Footer";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -80,6 +81,7 @@ const App = () => {
           <Route path="/admin/declineddbooks" element={<ViewDeclinedBooks />} />
         </Route>
       </Routes>
+      <Footer/>
       <GotoTop />
     </>
   );
