@@ -327,7 +327,7 @@ const MyBooks = () => {
                       />
                       Description
                     </h3>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 leading-relaxed max-h-[250px] overflow-y-auto">
                       <ShrinkDescription
                         desc={selectedBook.description}
                         size={250}
