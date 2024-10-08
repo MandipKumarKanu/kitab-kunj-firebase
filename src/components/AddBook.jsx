@@ -13,6 +13,8 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
 import { capitalizeFirstLetter } from "./utils/Capitalise";
+import imageCompression from 'browser-image-compression';
+
 
 const bookSchema = z
   .object({
@@ -152,8 +154,18 @@ const AddBook = () => {
     try {
       setLoading(true);
 
-      const storageRef = ref(storage, `books/${bookImage.name}`);
-      await uploadBytes(storageRef, bookImage);
+      const options = {
+        maxSizeMB: 0.8, 
+        maxWidthOrHeight: 1920, 
+        useWebWorker: true 
+      };
+  
+      const compressedFile = await imageCompression(bookImage, options);
+
+      console.log(compressedFile, bookImage)
+
+      const storageRef = ref(storage, `books/${compressedFile.lastModified}`);
+      await uploadBytes(storageRef, compressedFile);
       const imageUrl = await getDownloadURL(storageRef);
 
       const bookData = {

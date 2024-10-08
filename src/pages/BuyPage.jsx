@@ -51,8 +51,7 @@ const BuyPage = () => {
                 name={book.title}
                 author={book.author}
                 publishYear={book.publishYear}
-                Offerprice={book.Offerprice}
-                condition={book.availability}
+                condition={book.condition}
                 availability={book.availability}
               />
             ))}

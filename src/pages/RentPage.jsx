@@ -51,8 +51,8 @@ const RentPage = () => {
                 name={book.title}
                 author={book.author}
                 publishYear={book.publishYear}
-                Offerprice={book.Offerprice}
-                condition={book.availability}
+                perWeekPrice={book.perWeekPrice}
+                condition={book.condition}
                 availability={book.availability}
               />
             ))}

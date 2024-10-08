@@ -114,8 +114,9 @@ const AllBooks = () => {
                 name={book.title}
                 author={book.author}
                 publishYear={book.publishYear}
-                Offerprice={book.Offerprice}
-                condition={book.availability}
+                sellingPrice={book.sellingPrice}
+                perWeekPrice={book.perWeekPrice}
+                condition={book.condition}
                 availability={book.availability}
               />
             ))}
