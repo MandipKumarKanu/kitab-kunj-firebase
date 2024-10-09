@@ -66,9 +66,7 @@ const PendingApproval = () => {
   };
 
   const handleApprove = async (bookId, sellerId) => {
-    // Optimistic update
     const bookToApprove = books.find((book) => book.id === bookId);
-    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
 
     try {
       const bookRef = doc(db, "pendingBooks", bookId);
@@ -82,18 +80,22 @@ const PendingApproval = () => {
 
       await deleteDoc(bookRef);
 
+      const datatoSend = {
+        sellerId: sellerId || selectedBook.sellerId,
+      };
+
       await sendNotification(
-        sellerId || selectedBook.sellerId,
+        datatoSend,
         `Your book "${bookData.title}" has been approved.`,
         bookData.title,
         "approved",
         bookId
       );
+      setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
 
       console.log("Book approved and moved:", bookId);
     } catch (error) {
       console.error("Error approving book:", error);
-      // Revert optimistic update on error
       setBooks((prevBooks) => [...prevBooks, bookToApprove]);
     }
 
@@ -102,16 +104,13 @@ const PendingApproval = () => {
   };
 
   const handleDecline = async (bookId, sellerId) => {
-    // Open feedback dialog
     setFeedbackDialog({ open: true, bookId, sellerId });
   };
 
   const submitDeclineWithFeedback = async () => {
     const { bookId, sellerId } = feedbackDialog;
 
-    // Optimistic update
     const bookToDecline = books.find((book) => book.id === bookId);
-    setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
 
     try {
       const bookRef = doc(db, "pendingBooks", bookId);
@@ -121,23 +120,26 @@ const PendingApproval = () => {
       await setDoc(doc(db, "declinedBooks", bookId), {
         ...bookData,
         declinedAt: new Date(),
-        feedback: feedback,
       });
 
       await deleteDoc(bookRef);
+      const datatoSend = {
+        feedback,
+        sellerId: sellerId || selectedBook.sellerId,
+      };
 
       await sendNotification(
-        sellerId || selectedBook.sellerId,
+        datatoSend,
         `Your book "${bookData.title}" has been declined.`,
         bookData.title,
         "declined",
         bookId
       );
+      setBooks((prevBooks) => prevBooks.filter((book) => book.id !== bookId));
 
       console.log("Book declined and moved:", bookId);
     } catch (error) {
       console.error("Error declining book:", error);
-      // Revert optimistic update on error
       setBooks((prevBooks) => [...prevBooks, bookToDecline]);
     }
 
@@ -148,7 +150,7 @@ const PendingApproval = () => {
   };
 
   const sendNotification = async (
-    sellerId,
+    datatoSend,
     message,
     bookTitle,
     status,
@@ -156,7 +158,7 @@ const PendingApproval = () => {
   ) => {
     try {
       await setDoc(doc(db, "notification", bookId), {
-        sellerId,
+        ...datatoSend,
         message,
         bookTitle,
         status,

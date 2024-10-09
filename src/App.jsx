@@ -25,6 +25,7 @@ import SearchPage from "./components/SearchPage";
 import useResetScrollPosition from "./hooks/useResetScrollPosition";
 import Footer from "./components/Footer";
 import MyBooks from "./components/MyBooks";
+import Wishlist from "./components/Wishlist";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -74,6 +75,7 @@ const App = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/myapproved" element={<MyBooks />} />
           <Route path="/addbook" element={<AddBook />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/book/:id" element={<BookDesc />} />
           <Route path="/search" element={<SearchPage />} />
 

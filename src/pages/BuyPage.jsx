@@ -53,6 +53,7 @@ const BuyPage = () => {
                 publishYear={book.publishYear}
                 condition={book.condition}
                 availability={book.availability}
+              sellingPrice={book.sellingPrice}
               />
             ))}
         </div>
