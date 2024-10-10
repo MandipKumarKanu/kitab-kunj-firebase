@@ -6,7 +6,7 @@ const CartContext = createContext(undefined);
 export const CartContextProvider = ({ children }) => {
   const { user } = useAuth();
   const [cart, setCart] = useState([]);
-  const [cartLenght, setCartLength] = useState([]);
+  const [cartLength, setCartLength] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -19,7 +19,7 @@ export const CartContextProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ cart, updatedCart, cartLenght, setCartLength }}
+      value={{ cart, updatedCart, cartLength, setCartLength }}
     >
       {children}
     </CartContext.Provider>

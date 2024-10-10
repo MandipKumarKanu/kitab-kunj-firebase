@@ -13,7 +13,7 @@ import { useCart } from "./context/CartContext";
 
 const Navbar = () => {
   const currentUser = auth.currentUser;
-  const { cartLenght } = useCart();
+  const { cartLength } = useCart();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
@@ -135,13 +135,16 @@ const Navbar = () => {
               <>
                 <DropdownUser />
                 {useNavigate().pathName != "/cart" && (
-                  <NavLink to="/cart  " className="hidden md:flex md:ml-2 relative items-center justify-center">
+                  <NavLink
+                    to="/cart  "
+                    className="hidden md:flex md:ml-2 relative items-center justify-center"
+                  >
                     <FontAwesomeIcon
                       icon={faCartShopping}
                       className="text-2xl"
                     />
                     <span className="absolute -top-2 -right-1 transform translate-x-1 -translate-y-1 z-10 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-sm">
-                      {cartLenght || 0}
+                      {cartLength || 0}
                     </span>
                   </NavLink>
                 )}
