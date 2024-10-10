@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faBars, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { NavLink } from "react-router-dom";
+import {
+  faUser,
+  faBars,
+  faTimes,
+  faCartShopping,
+} from "@fortawesome/free-solid-svg-icons";
+import { NavLink, useNavigate } from "react-router-dom";
 import DropdownUser from "../hooks/DropDownUser";
 import { auth } from "../config/firebase.config";
+import { useCart } from "./context/CartContext";
 
 const Navbar = () => {
   const currentUser = auth.currentUser;
-
-  // console.log("currentUser",currentUser)
+  const { cartLenght } = useCart();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
@@ -127,7 +132,20 @@ const Navbar = () => {
                 </NavLink>
               </>
             ) : (
-              <DropdownUser />
+              <>
+                <DropdownUser />
+                {useNavigate().pathName != "/cart" && (
+                  <NavLink to="/cart  " className="hidden md:flex md:ml-2 relative items-center justify-center">
+                    <FontAwesomeIcon
+                      icon={faCartShopping}
+                      className="text-2xl"
+                    />
+                    <span className="absolute -top-2 -right-1 transform translate-x-1 -translate-y-1 z-10 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-sm">
+                      {cartLenght || 0}
+                    </span>
+                  </NavLink>
+                )}
+              </>
             )}
             <button
               className="md:hidden z-50"

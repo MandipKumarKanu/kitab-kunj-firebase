@@ -26,6 +26,8 @@ import useResetScrollPosition from "./hooks/useResetScrollPosition";
 import Footer from "./components/Footer";
 import MyBooks from "./components/MyBooks";
 import Wishlist from "./components/Wishlist";
+import Cart from "./components/Cart";
+import BillingAndOrderSummary from "./components/BillingAndOrderSummary";
 
 const App = () => {
   const { updatedUser } = useAuth();
@@ -78,6 +80,8 @@ const App = () => {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/book/:id" element={<BookDesc />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/billing" element={<BillingAndOrderSummary />} />
 
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminDashboard />} />
