@@ -14,6 +14,8 @@ import { useCart } from "./context/CartContext";
 const Navbar = () => {
   const currentUser = auth.currentUser;
   const { cartLength } = useCart();
+  const navigate = useNavigate();
+  const isCartPage = navigate.location?.pathname === "/cart";
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
@@ -134,7 +136,7 @@ const Navbar = () => {
             ) : (
               <>
                 <DropdownUser />
-                {useNavigate().pathName != "/cart" && (
+                {!isCartPage && (
                   <NavLink
                     to="/cart  "
                     className="hidden md:flex md:ml-2 relative items-center justify-center"
