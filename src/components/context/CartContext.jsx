@@ -11,7 +11,7 @@ export const CartContextProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       setCart(user.cart || []);
-      setCartLength(user.cart.length || 0);
+      setCartLength(user?.cart?.length || 0);
     }
   }, [user]);
 
