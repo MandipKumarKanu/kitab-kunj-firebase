@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  collection,
+  addDoc,
+} from "firebase/firestore";
 import { auth, db } from "../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
+import BillingDetailsModal from "./BillingDetailsModal";
+
+const MAX_ADDRESSES = 5;
 
 function BillingAndOrderSummary() {
   const location = useLocation();
+  const navigate = useNavigate();
   const checkoutData = location.state?.checkoutData;
   const platformFee = checkoutData ? checkoutData.subtotal * 0.1 : 0;
   const totalPayment = checkoutData
@@ -16,34 +27,181 @@ function BillingAndOrderSummary() {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("credit");
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
-    const fetchAddresses = async () => {
-      if (auth?.currentUser) {
-        const userDocRef = doc(db, "users", auth?.currentUser?.uid);
-        const userDocSnap = await getDoc(userDocRef);
+    fetchAddresses();
+  }, [auth.currentUser, checkoutData?.selectedAddressIndex]);
 
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          setAddresses(userData.addresses || []);
-          if (userData.addresses && userData.addresses.length > 0) {
-            setSelectedAddress(
-              userData.addresses[checkoutData.selectedAddressIndex || 0]
-            );
-          }
+  const fetchAddresses = async () => {
+    if (auth?.currentUser) {
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        setAddresses(userData.addresses || []);
+        if (userData.addresses && userData.addresses.length > 0) {
+          setSelectedAddress(
+            userData.addresses[checkoutData?.selectedAddressIndex || 0]
+          );
         }
       }
-    };
-
-    fetchAddresses();
-
-    console.log(addresses);
-  }, [auth.currentUser, db, checkoutData.selectedAddressIndex]);
+    }
+  };
 
   const handleAddressSelect = (address) => {
     setSelectedAddress(address);
     setIsAddressDialogOpen(false);
   };
+
+  const handleBillingSubmit = async (billingData) => {
+    try {
+      if (addresses.length >= MAX_ADDRESSES) {
+        alert(
+          "You've reached the maximum number of addresses. Please delete an address to add a new one."
+        );
+        return;
+      }
+
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        addresses: arrayUnion(billingData),
+      });
+
+      await fetchAddresses();
+      setIsBillingModalOpen(false);
+    } catch (error) {
+      console.error("Error adding address: ", error);
+    }
+  };
+
+  const handleDeleteAddress = async (addressToDelete) => {
+    try {
+      const updatedAddresses = addresses.filter(
+        (address) => address !== addressToDelete
+      );
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        addresses: updatedAddresses,
+      });
+      setAddresses(updatedAddresses);
+      if (selectedAddress === addressToDelete) {
+        setSelectedAddress(updatedAddresses[0] || null);
+      }
+    } catch (error) {
+      console.error("Error deleting address: ", error);
+    }
+  };
+
+  console.log(checkoutData.selectedBooks);
+
+  const generateOrderData = () => {
+    const purchaseOrderId = `order_${Date.now()}`;
+    return {
+      purchaseOrderId,
+      purchaseOrderName: "books",
+      customerInfo: {
+        name: `${selectedAddress.firstName} ${selectedAddress.lastName}`,
+        email: selectedAddress.email,
+        phone: "9811209589",
+      },
+      product_details: checkoutData.selectedBooks.map((book) => ({
+        identity: book.id,
+        produc_img: book.images,
+        name: book.bookName,
+        total_price: book.sellingPrice,
+        quantity: 1,
+        unit_price: book.sellingPrice,
+      })),
+      amount: totalPayment,
+    };
+  };
+
+  const handlePaymentConfirm = async () => {
+    console.log(generateOrderData());
+    const orderData = generateOrderData();
+    const dataToSave = {
+      ...orderData,
+      platformFee,
+      shippingFee: checkoutData?.shippingFee?.toFixed(2) || 50,
+    };
+    localStorage.setItem("pendingOrder", JSON.stringify(dataToSave));
+
+    if (paymentMethod === "wallet") {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/payment/initiate",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(orderData),
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log(result);
+          window.location.href = result.payment_url;
+        }
+      } catch (error) {
+        console.error("Payment initiation failed:", error);
+      }
+    } else if (paymentMethod === "credit") {
+      try {
+        const orderPendingRef = collection(db, "orders");
+        await addDoc(orderPendingRef, {
+          ...orderData,
+          purchasedBy: auth.currentUser.uid,
+          createdAt: new Date(),
+          status: "pending",
+          paymentMethod,
+        });
+
+        console.log(orderData);
+        navigate("/order-success", { state: { orderData } });
+      } catch (error) {
+        console.error("Failed to create order:", error);
+      }
+    }
+
+    setIsPaymentDialogOpen(false);
+  };
+
+  const PaymentConfirmationDialog = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+        <h3 className="text-xl font-bold mb-4">Confirm Payment</h3>
+        <p className="mb-4">
+          {paymentMethod === "credit"
+            ? `Your credit balance of Rs. ${totalPayment.toFixed(
+                2
+              )} will be deducted.`
+            : `You will be redirected to the payment gateway to pay Rs. ${totalPayment.toFixed(
+                2
+              )}.`}
+        </p>
+        <div className="flex justify-end gap-4">
+          <button
+            className="px-4 py-2 bg-gray-500 text-white rounded"
+            onClick={() => setIsPaymentDialogOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+            onClick={handlePaymentConfirm}
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-4 container mx-auto">
@@ -164,13 +322,6 @@ function BillingAndOrderSummary() {
               />
             </div>
           </div>
-
-          {/* <button
-            onClick={() => setIsAddressDialogOpen(true)}
-            className="w-full py-2 bg-primaryColor text-white rounded-full"
-          >
-            Choose Address
-          </button> */}
         </div>
       </div>
 
@@ -187,9 +338,8 @@ function BillingAndOrderSummary() {
                   >
                     {book.bookName}
                   </span>
-                  {book.author}
+                  <span>{book.author}</span>
                 </div>
-
                 <div>1x</div>
                 <div>Rs. {book.sellingPrice.toFixed(2)}</div>
               </div>
@@ -224,8 +374,10 @@ function BillingAndOrderSummary() {
                 <input
                   type="radio"
                   name="payment"
+                  value="credit"
+                  checked={paymentMethod === "credit"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mr-2"
-                  defaultChecked
                   style={{ accentColor: "#531D99" }}
                 />
                 <span>Direct Credit Transfer</span>
@@ -234,43 +386,81 @@ function BillingAndOrderSummary() {
                 <input
                   type="radio"
                   name="payment"
+                  value="wallet"
+                  checked={paymentMethod === "wallet"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mr-2"
                   style={{ accentColor: "#531D99" }}
                 />
-                <span>eSewa</span>
+                <span>Khalti</span>
               </label>
             </div>
           </div>
         </div>
-        <button className="w-full py-3 mt-8 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold shadow-lg hover:from-primaryColor hover:to-primaryColor transition">
+        <button
+          className="w-full py-3 mt-8 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-full text-white text-lg font-bold shadow-lg hover:from-primaryColor hover:to-primaryColor transition"
+          onClick={() => setIsPaymentDialogOpen(true)}
+        >
           Place Order
         </button>
       </div>
 
+      {isPaymentDialogOpen && <PaymentConfirmationDialog />}
+
       {isAddressDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">Choose an Address</h3>
-            {addresses.map((address, index) => (
-              <div
-                key={index}
-                className="p-2 border rounded mb-2 cursor-pointer hover:bg-gray-100"
-                onClick={() => handleAddressSelect(address)}
+            <div className="max-h-96 overflow-y-auto">
+              {addresses.map((address, index) => (
+                <div
+                  key={index}
+                  className={`p-2 border rounded mb-2 ${
+                    selectedAddress === address ? "bg-blue-100" : ""
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div
+                      className="cursor-pointer flex-grow"
+                      onClick={() => handleAddressSelect(address)}
+                    >
+                      <p>{`${address.firstName} ${address.lastName} (${address.phone})`}</p>
+                      <p>{`${address.landmark}, ${address.town}`}</p>
+                      <p>{address.streetAddress}</p>
+                    </div>
+                    <button
+                      className="text-red-500 hover:text-red-700 ml-2"
+                      onClick={() => handleDeleteAddress(address)}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between mt-4">
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={() => setIsBillingModalOpen(true)}
               >
-                <p>{`${address.firstName} ${address.lastName} (${address.phone})`}</p>
-                <p>{`${address.landmark}, ${address.town}`}</p>
-                <p>{address.streetAddress}</p>
-              </div>
-            ))}
-            <button
-              onClick={() => setIsAddressDialogOpen(false)}
-              className="mt-4 px-4 py-2 bg-primaryColor text-white rounded"
-            >
-              Close
-            </button>
+                Add New Address
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded"
+                onClick={() => setIsAddressDialogOpen(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      <BillingDetailsModal
+        isOpen={isBillingModalOpen}
+        onClose={() => setIsBillingModalOpen(false)}
+        onSubmit={handleBillingSubmit}
+      />
     </div>
   );
 }

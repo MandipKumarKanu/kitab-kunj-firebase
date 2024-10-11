@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faShoppingCart,
@@ -8,6 +8,7 @@ import {
   faBook,
   faTruck,
   faShareNodes,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { RWebShare } from "react-web-share";
@@ -24,6 +25,7 @@ const BookDesc = () => {
 
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [book, setBook] = useState(null);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const { id } = useParams();
   const location = useLocation();
 
@@ -52,10 +54,19 @@ const BookDesc = () => {
     setIsWishlisted(wishlisted);
   };
 
-  const handleWishlist = async () => {
-    await toggleWishlist(uid, id);
-    setIsWishlisted(!isWishlisted);
-  };
+  const handleWishlist = useCallback(async () => {
+    if (isWishlistLoading) return;
+
+    setIsWishlistLoading(true);
+    try {
+      await toggleWishlist(uid, id);
+      setIsWishlisted((prev) => !prev);
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  }, [uid, id, isWishlistLoading]);
 
   const currentUrl = `${window.location.origin}${location.pathname}`;
 
@@ -72,20 +83,20 @@ const BookDesc = () => {
 
   return (
     <div className="container mx-auto mt-5 mb-6 px-6 py-8 bg-purple-100 rounded-3xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-20  ">
-        <div>
-          <div className="sticky top-8 w-full h-96 sm:h-[680px] flex-shrink-0 overflow-hidden rounded-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
+        <div className="">
+          <div className="sticky top-24 w-full h-96 sm:h-[680px] flex-shrink-0 overflow-hidden rounded-lg">
             <Magnifier
               src={book.images[0]}
-              zoomFactor={1.65}
+              mgWidth={200}
+              mgHeight={200}
+              zoomFactor={1.2}
               alt={book.title}
-              className="w-full shadow-lg h-full object-cover"
               style={{
-                width: "100%",
-                height: "auto",
                 objectFit: "cover",
                 display: "block",
                 cursor: "crosshair",
+                height: "100%",
               }}
             />
           </div>
@@ -129,12 +140,20 @@ const BookDesc = () => {
               <div className="flex space-x-4">
                 <button
                   onClick={handleWishlist}
-                  className="p-2 text-gray-500 hover:text-red-400 transition-colors duration-200"
+                  disabled={isWishlistLoading}
+                  className="p-2 text-gray-500 hover:text-red-400 transition-colors duration-200 relative"
                 >
-                  <FontAwesomeIcon
-                    icon={isWishlisted ? faHeartSolid : faHeartRegular}
-                    className={`${isWishlisted && "text-red-500"} text-2xl`}
-                  />
+                  {isWishlistLoading ? (
+                    <FontAwesomeIcon
+                      icon={faSpinner}
+                      className="text-2xl animate-spin"
+                    />
+                  ) : (
+                    <FontAwesomeIcon
+                      icon={isWishlisted ? faHeartSolid : faHeartRegular}
+                      className={`${isWishlisted && "text-red-500"} text-2xl`}
+                    />
+                  )}
                 </button>
                 <RWebShare
                   data={{
@@ -201,61 +220,65 @@ const BookDesc = () => {
           </div>
         </div>
 
-        <div>
-          <div className="bg-green-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Product Details
-            </h2>
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Edition:</span>
-                <span className="text-gray-900">{book.edition}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Language:</span>
-                <span className="text-gray-900">{book.language}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Publish Year:</span>
-                <span className="text-gray-900">{book.publishYear}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Seller:</span>
-                <span className="text-gray-900">{book.sellerName}</span>
+        <div className=" ">
+          <div className="sticky top-24">
+            <div className="bg-green-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Product Details
+              </h2>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Edition:</span>
+                  <span className="text-gray-900">{book.edition}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Language:</span>
+                  <span className="text-gray-900">{book.language}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Publish Year:</span>
+                  <span className="text-gray-900">{book.publishYear}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Seller:</span>
+                  <span className="text-gray-900">{book.sellerName}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-6 bg-yellow-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Delivery Information
-            </h2>
-            <div className="flex items-center mb-3">
-              <FontAwesomeIcon
-                icon={faTruck}
-                className="text-gray-400 w-5 mr-2"
-              />
-              <span className="text-gray-700">
-                Delivery Charge: ₹50 on all orders
-              </span>
+            <div className="mt-6 bg-yellow-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Delivery Information
+              </h2>
+              <div className="flex items-center mb-3">
+                <FontAwesomeIcon
+                  icon={faTruck}
+                  className="text-gray-400 w-5 mr-2"
+                />
+                <span className="text-gray-700">
+                  Delivery Charge: ₹50 on all orders
+                </span>
+              </div>
+              {book.availability !== "rent" && (
+                <div className="mb-3">
+                  <span className="text-gray-700">
+                    No return policy is available.
+                  </span>
+                </div>
+              )}
+
+              <button className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor">
+                <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                {book.availability === "rent" ? "Rent Now" : "Buy Now"}
+              </button>
+
+              {book.availability === "rent" && (
+                <p className="mt-4 text-sm text-gray-600">
+                  Enjoy reading with our flexible rental option. Rent the book
+                  for ₹{book.perWeekPrice}/week and return it anytime!
+                </p>
+              )}
             </div>
-            <div className="mb-3">
-              <span className="text-gray-700">
-                No return policy is available.
-              </span>
-            </div>
-
-            <button className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor">
-              <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-              {book.availability === "rent" ? "Rent Now" : "Buy Now"}
-            </button>
-
-            {book.availability === "rent" && (
-              <p className="mt-4 text-sm text-gray-600">
-                Enjoy reading with our flexible rental option. Rent the book for
-                ₹{book.perWeekPrice}/week and return it anytime!
-              </p>
-            )}
           </div>
         </div>
       </div>

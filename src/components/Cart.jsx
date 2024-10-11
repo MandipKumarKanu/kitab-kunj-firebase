@@ -16,13 +16,17 @@ import CartItem from "./CartItem";
 import { useNavigate } from "react-router-dom";
 import BillingDetailsModal from "./BillingDetailsModal";
 import { arrayUnion, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { useCart } from "./context/CartContext";
 
 const MAX_ADDRESSES = 5;
+const shippingFee = 50;
 
 const Cart = () => {
   const currentUser = auth.currentUser;
   const { uid } = currentUser;
   const navigate = useNavigate();
+
+  const { setCartLength } = useCart();
 
   const [cartBooks, setCartBooks] = useState([]);
   const [selectedBooks, setSelectedBooks] = useState({});
@@ -43,7 +47,7 @@ const Cart = () => {
 
   const loadCartBooks = async () => {
     setIsLoading(true);
-    const books = await fetchCartBooks(uid, setCartBooks);
+    await fetchCartBooks(uid, setCartBooks);
     setIsLoading(false);
   };
 
@@ -55,7 +59,7 @@ const Cart = () => {
         const userData = userDoc.data();
         if (userData.addresses && userData.addresses.length > 0) {
           setUserAddresses(userData.addresses);
-          setSelectedAddressIndex(0); 
+          setSelectedAddressIndex(0);
         }
       }
     } catch (error) {
@@ -95,12 +99,14 @@ const Cart = () => {
       ? [currentBook.id]
       : Object.keys(selectedBooks).filter((id) => selectedBooks[id]);
 
+    // console.log(selectedIds)
+
     const updatedBooks = cartBooks.filter(
       (book) => !selectedIds.includes(book.id)
     );
     await updateCartInFirebase(uid, updatedBooks);
     setCartBooks(updatedBooks);
-
+    setCartLength((prev) => prev - selectedIds?.length);
     if (!isSingleDelete) setSelectedBooks({});
 
     setIsLoading(false);
@@ -120,6 +126,8 @@ const Cart = () => {
         const { [currentBook.id]: removed, ...rest } = prev;
         return rest;
       });
+      setCartLength((prev) => prev - 1);
+
       setIsLoading(false);
       setIsWishlistDialogOpen(false);
     }
@@ -135,6 +143,7 @@ const Cart = () => {
     );
   };
 
+  // console.log(cartBooks)
   const prepareCheckoutData = () => {
     const selectedBookDetails = cartBooks
       .filter((book) => selectedBooks[book.id])
@@ -143,13 +152,14 @@ const Cart = () => {
         bookName: book.title,
         author: book.author,
         sellingPrice: book.sellingPrice,
+        images: book.images[0],
       }));
 
     const checkoutData = {
       selectedBooks: selectedBookDetails,
       subtotal: calculateSubtotal(),
-      shippingFee: 0,
-      selectedAddressIndex
+      shippingFee,
+      selectedAddressIndex,
     };
 
     return checkoutData;
@@ -184,9 +194,8 @@ const Cart = () => {
 
       console.log("Address successfully added!");
 
-      // Fetch updated addresses and select the newly added one
       await fetchUserAddresses();
-      setSelectedAddressIndex(userAddresses.length); // Select the last (newly added) address
+      setSelectedAddressIndex(userAddresses.length);
 
       setIsBillingModalOpen(false);
     } catch (error) {
@@ -350,7 +359,7 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping Fee</span>
-                    <span>Rs. 0</span>
+                    <span>Rs. {shippingFee}</span>
                   </div>
                 </div>
                 <div className="flex gap-4 mb-4">
@@ -365,7 +374,12 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between font-semibold text-base sm:text-lg mb-4">
                   <span>Total</span>
-                  <span>Rs. {calculateSubtotal()}</span>
+                  <span>
+                    Rs.
+                    {calculateSubtotal() > 0
+                      ? calculateSubtotal() + shippingFee
+                      : 0}
+                  </span>
                 </div>
                 <button
                   className={`w-full py-2 sm:py-3 rounded-3xl text-white font-semibold transition duration-200 text-sm sm:text-base ${

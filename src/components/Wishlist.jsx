@@ -9,18 +9,22 @@ import {
   faInfoCircle,
   faHeart,
   faShoppingCart,
+  faHandHoldingUsd,
 } from "@fortawesome/free-solid-svg-icons";
 import { doc, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import HeadingText from "./Heading";
 import ShrinkDescription from "./utils/ShrinkDescription";
+import { useCart } from "./context/CartContext";
 
 const Wishlist = () => {
   const [wishlistBooks, setWishlistBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
+  const [processingItems, setProcessingItems] = useState({});
   const userId = auth?.currentUser?.uid;
+
+  const { setCartLength } = useCart();
 
   useEffect(() => {
     fetchWishlistBooks(userId, setWishlistBooks).finally(() =>
@@ -28,7 +32,6 @@ const Wishlist = () => {
     );
   }, [userId]);
 
-  // Effect to handle body scroll when dialog is open
   useEffect(() => {
     if (selectedBook) {
       document.body.style.overflow = "hidden";
@@ -36,16 +39,25 @@ const Wishlist = () => {
       document.body.style.overflow = "unset";
     }
 
-    // Cleanup function
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [selectedBook]);
 
-  const removeFromWishlist = async (bookId) => {
-    if (!userId || processing) return;
+  const setProcessing = (bookId, action, isProcessing) => {
+    setProcessingItems((prev) => ({
+      ...prev,
+      [bookId]: {
+        ...prev[bookId],
+        [action]: isProcessing,
+      },
+    }));
+  };
 
-    setProcessing(true);
+  const removeFromWishlist = async (bookId) => {
+    if (!userId || processingItems[bookId]?.remove) return;
+
+    setProcessing(bookId, "remove", true);
     const userRef = doc(db, "users", userId);
 
     try {
@@ -65,14 +77,14 @@ const Wishlist = () => {
       console.error("Error removing from wishlist:", error);
       toast.error("Failed to remove from wishlist");
     } finally {
-      setProcessing(false);
+      setProcessing(bookId, "remove", false);
     }
   };
 
   const addToCart = async (bookId) => {
-    if (!userId || processing) return;
+    if (!userId || processingItems[bookId]?.cart) return;
 
-    setProcessing(true);
+    setProcessing(bookId, "cart", true);
     const userRef = doc(db, "users", userId);
 
     try {
@@ -81,13 +93,31 @@ const Wishlist = () => {
       });
 
       removeFromWishlist(bookId);
-
+      setCartLength((prev) => prev + 1);
       toast.success("Added to cart");
     } catch (error) {
       console.error("Error adding to cart:", error);
       toast.error("Failed to add to cart");
     } finally {
-      setProcessing(false);
+      setProcessing(bookId, "cart", false);
+    }
+  };
+
+  const rentBook = async (bookId) => {
+    if (!userId || processingItems[bookId]?.rent) return;
+
+    setProcessing(bookId, "rent", true);
+
+    try {
+      // Implement your rent logic here
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulating API call
+      toast.success("Book rented successfully");
+      removeFromWishlist(bookId);
+    } catch (error) {
+      console.error("Error renting book:", error);
+      toast.error("Failed to rent book");
+    } finally {
+      setProcessing(bookId, "rent", false);
     }
   };
 
@@ -111,8 +141,42 @@ const Wishlist = () => {
     );
   }
 
+  const renderActionButton = (book) => {
+    if (book.availability === "rent") {
+      return (
+        <button
+          onClick={() => rentBook(book.id)}
+          disabled={processingItems[book.id]?.rent}
+          className="w-10 h-10 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative"
+          title="Rent Book"
+        >
+          {processingItems[book.id]?.rent ? (
+            <FontAwesomeIcon icon={faSpinner} spin />
+          ) : (
+            <FontAwesomeIcon icon={faHandHoldingUsd} />
+          )}
+        </button>
+      );
+    } else {
+      return (
+        <button
+          onClick={() => addToCart(book.id)}
+          disabled={processingItems[book.id]?.cart}
+          className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full hover:bg-purple-200 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative"
+          title="Add to Cart"
+        >
+          {processingItems[book.id]?.cart ? (
+            <FontAwesomeIcon icon={faSpinner} spin />
+          ) : (
+            <FontAwesomeIcon icon={faShoppingCart} />
+          )}
+        </button>
+      );
+    }
+  };
+
   return (
-    <div className="container mx-auto ">
+    <div className="container mx-auto">
       <HeadingText
         fullName="Wishlist"
         bgName="Books you liked"
@@ -134,70 +198,67 @@ const Wishlist = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {wishlistBooks.map((book) => (
             <div
               key={book.id}
-              className="group relative bg-white/70 backdrop-blur-md rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-purple-100"
+              className="group relative bg-white/70 backdrop-blur-md rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 border border-purple-100 flex flex-col h-full"
             >
-              <div className="flex flex-col sm:flex-row p-4">
-                <div className="relative w-full sm:w-1/3 mb-4 sm:mb-0">
-                  <img
-                    src={book.images?.[0] || "/placeholder-book.jpg"}
-                    alt={book.title}
-                    className="w-full h-48 object-cover rounded-lg shadow-lg transition-transform duration-300 "
-                  />
-                  <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow text-sm font-medium text-purple-600">
-                    ₹{book.originalPrice.toLocaleString()}
+              <div className="p-4 flex-grow">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative w-full sm:w-1/3">
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg shadow text-sm font-medium text-purple-600 z-10">
+                      {book.availability === "rent"
+                        ? `₹${book.perWeekPrice.toLocaleString()}/week`
+                        : `₹${book.sellingPrice.toLocaleString()}`}
+                    </div>
+                    <img
+                      src={book.images?.[0] || "/placeholder-book.jpg"}
+                      alt={book.title}
+                      className="w-full h-48 object-cover rounded-lg shadow-lg transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <h2 className="text-xl font-semibold text-gray-800 line-clamp-2 mb-2">
+                      {book.title}
+                    </h2>
+                    <p className="text-sm text-gray-600 mb-2 italic">
+                      by {book.author}
+                    </p>
+                    <p className="text-sm font-medium text-purple-500 mb-2">
+                      {book.availability === "rent"
+                        ? "Available for Rent"
+                        : "Available for Sale"}
+                    </p>
+                    <p className="text-gray-500 text-sm line-clamp-3 mb-4">
+                      {book.description}
+                    </p>
                   </div>
                 </div>
-                <div className="sm:ml-4 flex-1 flex flex-col">
-                  <h2 className="text-xl font-semibold text-gray-800 line-clamp-2 mb-2 ">
-                    {book.title}
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-2 italic max-h-10 ">
-                    by {book.author}
-                  </p>
-
-                  {/* Show availability status */}
-                  <p className="text-sm font-medium text-purple-500 mb-2">
-                    {book.availability === "rent"
-                      ? "Available for Rent"
-                      : "Available for Sale"}
-                  </p>
-
-                  <p className="text-gray-500 text-sm line-clamp-3 mb-4">
-                    {book.description}
-                  </p>
-                  <div className="mt-auto flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+              </div>
+              <div className="p-4 bg-gray-50 mt-auto">
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => setSelectedBook(book)}
+                    className="text-purple-500 hover:text-purple-700 transition-colors flex items-center"
+                  >
+                    <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
+                    Details
+                  </button>
+                  <div className="flex space-x-2">
+                    {renderActionButton(book)}
                     <button
-                      onClick={() => setSelectedBook(book)}
-                      className="text-purple-500 hover:text-purple-700 transition-colors flex items-center"
+                      onClick={() => removeFromWishlist(book.id)}
+                      disabled={processingItems[book.id]?.remove}
+                      className="w-10 h-10 bg-red-100 text-red-500 rounded-full hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
+                      title="Remove from Wishlist"
                     >
-                      <FontAwesomeIcon icon={faInfoCircle} className="mr-2" />
-                      Details
-                    </button>
-                    <div className="flex space-x-2 w-full sm:w-auto">
-                      <button
-                        onClick={() => addToCart(book.id)}
-                        disabled={processing}
-                        className="flex-1 sm:flex-none bg-purple-100 text-purple-600 px-4 py-2 rounded-full hover:bg-purple-200 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FontAwesomeIcon
-                          icon={faShoppingCart}
-                          className="mr-2"
-                        />
-                        Add to Cart
-                      </button>
-                      <button
-                        onClick={() => removeFromWishlist(book.id)}
-                        disabled={processing}
-                        className="bg-red-100 text-red-500 px-3 py-2 rounded-full hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Remove from Wishlist"
-                      >
+                      {processingItems[book.id]?.remove ? (
+                        <FontAwesomeIcon icon={faSpinner} spin />
+                      ) : (
                         <FontAwesomeIcon icon={faHeart} />
-                      </button>
-                    </div>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -239,7 +300,6 @@ const Wishlist = () => {
                     className="w-full h-auto object-cover rounded-lg shadow-lg"
                   />
                   <div className="mt-4 bg-purple-50 p-4 rounded-lg">
-                    {/* Show pricing based on availability */}
                     {selectedBook.availability === "rent" ? (
                       <>
                         <p className="text-xl font-bold text-gray-800">
@@ -265,23 +325,57 @@ const Wishlist = () => {
                     )}
 
                     <div className="flex space-x-2 mt-4">
-                      <button
-                        onClick={() => addToCart(selectedBook.id)}
-                        disabled={processing}
-                        className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <FontAwesomeIcon
-                          icon={faShoppingCart}
-                          className="mr-2"
-                        />
-                        Add to Cart
-                      </button>
+                      {selectedBook.availability === "rent" ? (
+                        <button
+                          onClick={() => rentBook(selectedBook.id)}
+                          disabled={processingItems[selectedBook.id]?.rent}
+                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {processingItems[selectedBook.id]?.rent ? (
+                            <FontAwesomeIcon
+                              icon={faSpinner}
+                              spin
+                              className="mr-2"
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={faHandHoldingUsd}
+                              className="mr-2"
+                            />
+                          )}
+                          Rent Book
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => addToCart(selectedBook.id)}
+                          disabled={processingItems[selectedBook.id]?.cart}
+                          className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {processingItems[selectedBook.id]?.cart ? (
+                            <FontAwesomeIcon
+                              icon={faSpinner}
+                              spin
+                              className="mr-2"
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={faShoppingCart}
+                              className="mr-2"
+                            />
+                          )}
+                          Add to Cart
+                        </button>
+                      )}
                       <button
                         onClick={() => removeFromWishlist(selectedBook.id)}
-                        disabled={processing}
+                        disabled={processingItems[selectedBook.id]?.remove}
                         className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <FontAwesomeIcon icon={faHeart} />
+                        {processingItems[selectedBook.id]?.remove ? (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        ) : (
+                          <FontAwesomeIcon icon={faHeart} />
+                        )}
                       </button>
                     </div>
                   </div>

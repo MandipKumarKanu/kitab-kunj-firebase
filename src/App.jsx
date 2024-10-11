@@ -28,8 +28,13 @@ import MyBooks from "./components/MyBooks";
 import Wishlist from "./components/Wishlist";
 import Cart from "./components/Cart";
 import BillingAndOrderSummary from "./components/BillingAndOrderSummary";
+import FAQ from "./components/FAQ";
+import OrderSuccessPage from "./pages/OrderSuccessPage";
+import PaymentVerification from "./components/PaymentVerification";
 
 const App = () => {
+  const currentUser = auth.currentUser;
+  console.log(currentUser);
   const { updatedUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -43,7 +48,6 @@ const App = () => {
           const userDoc = await getDoc(doc(collection(db, "users"), user.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            console.log(userData);
             updatedUser(userData);
           }
         }
@@ -82,6 +86,9 @@ const App = () => {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/billing" element={<BillingAndOrderSummary />} />
+          <Route path="/payment/verify/" element={<PaymentVerification />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
+          <Route path="/faq" element={<FAQ />} />
 
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminDashboard />} />

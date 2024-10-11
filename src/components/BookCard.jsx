@@ -16,7 +16,8 @@ const BookCard = ({
 }) => {
   const navigate = useNavigate();
   return (
-    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 w-full bg-white rounded-xl shadow-none hover:shadow-md transition-shadow duration-300">
+    <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 w-full bg-white rounded-xl shadow-none hover:shadow-md transition-shadow cursor-pointer duration-300"
+    onClick={() => navigate(`/book/${id}`)} >
       <div className="relative w-full sm:w-48 h-48 sm:h-64 flex-shrink-0">
         <img
           src={img}
@@ -61,7 +62,6 @@ const BookCard = ({
           <PrimaryBtn
             name={availability !== "donation" ? "Buy Now" : "View Book"}
             style="max-w-[165px]"
-            onClick={() => navigate(`/book/${id}`)}
           />
         </div>
       </div>
