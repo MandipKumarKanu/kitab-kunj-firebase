@@ -25,6 +25,7 @@ import Magnifier from "react18-image-magnifier";
 import ShrinkDescription from "./utils/ShrinkDescription";
 import { fetchWishlistStatus, toggleWishlist } from "../hooks/Wishlist.Hook";
 import { useCart } from "./context/CartContext";
+import { formatPrice } from "./utils/formatPrice";
 
 const BookDesc = () => {
   const { setCartLength } = useCart();
@@ -122,13 +123,6 @@ const BookDesc = () => {
   };
 
   const currentUrl = `${window.location.origin}${location.pathname}`;
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;

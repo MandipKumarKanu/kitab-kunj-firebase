@@ -12,6 +12,7 @@ import { db } from "../../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
+import { formatPrice } from "../utils/formatPrice";
 
 const ViewApprovedBooks = () => {
   const [books, setBooks] = useState([]);
@@ -129,15 +130,8 @@ const ViewApprovedBooks = () => {
     setSelectedBook(null);
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
-  };
-
   return (
-    <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-full mx-auto ">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Approved Books</h1>
 
       {loading ? (

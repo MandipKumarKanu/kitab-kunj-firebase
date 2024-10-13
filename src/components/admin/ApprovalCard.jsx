@@ -9,6 +9,7 @@ import {
   faCheck,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import { formatPrice } from "../utils/formatPrice";
 
 const ApprovalCard = ({
   book,
@@ -20,14 +21,6 @@ const ApprovalCard = ({
   showDecline = true,
   onDelete,
 }) => {
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
 
   const getAvailabilityIcon = () => {
     const icons = {

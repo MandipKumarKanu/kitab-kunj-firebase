@@ -17,6 +17,7 @@ import { auth, db } from "../config/firebase.config";
 import HeadingText from "./Heading";
 import { formatDate } from "./utils/timeStampConversion";
 import ShrinkDescription from "./utils/ShrinkDescription";
+import { formatPrice } from "./utils/formatPrice";
 
 const MyBooks = () => {
   const [books, setBooks] = useState([]);
@@ -51,18 +52,10 @@ const MyBooks = () => {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
-  };
 
   const filteredBooks = books.filter((book) => {
-    // Apply filter based on availability
     const availabilityFilter = filter === "all" || book.availability === filter;
 
-    // Apply search filter (case-insensitive)
     const searchFilter =
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase());
@@ -87,12 +80,12 @@ const MyBooks = () => {
 
   const openModal = (book) => {
     setSelectedBook(book);
-    document.body.style.overflow = "hidden"; // Prevent background scroll
+    document.body.style.overflow = "hidden"; 
   };
 
   const closeModal = () => {
     setSelectedBook(null);
-    document.body.style.overflow = "auto"; // Restore background scroll
+    document.body.style.overflow = "auto"; 
   };
 
   if (loading) {
@@ -117,7 +110,7 @@ const MyBooks = () => {
             type="text"
             placeholder="Search by title or author..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+            onChange={(e) => setSearchQuery(e.target.value)} 
             className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:border-blue-500"
           />
         </div>

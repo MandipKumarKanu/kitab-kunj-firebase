@@ -9,16 +9,16 @@ const ShrinkDescription = ({ desc, size = 150 }) => {
   };
 
   const renderDescription = () => {
-    if (!desc) return <p>No description available!</p>;
+    if (!desc) return <div>No description available!</div>;
 
     if (desc.length <= MAX_DESCRIPTION_LENGTH) {
-      return <p>{desc}</p>;
+      return <div>{desc}</div>;
     }
 
     if (showFullDescription) {
       return (
         <div>
-          <p className="text-lg text-gray-700">{desc}</p>
+          <div className="text-lg text-gray-700">{desc}</div>
           <button
             onClick={toggleDescription}
             className="text-blue-500 mt-2 hover:text-blue-700"
@@ -31,9 +31,9 @@ const ShrinkDescription = ({ desc, size = 150 }) => {
 
     return (
       <div>
-        <p className="text-lg text-gray-700">
+        <div className="text-lg text-gray-700">
           {desc.slice(0, MAX_DESCRIPTION_LENGTH)}...
-        </p>
+        </div>
         <button
           onClick={toggleDescription}
           className="text-blue-500 mt-2 hover:text-blue-700"

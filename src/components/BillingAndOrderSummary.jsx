@@ -212,6 +212,7 @@ function BillingAndOrderSummary() {
 
           const notificationRef = collection(db, "notification");
           await addDoc(notificationRef, {
+            bookId: book.identity,
             bookTitle: book.name,
             message: `Your book "${book.name}" has been requested for purchase.`,
             source: "buy",

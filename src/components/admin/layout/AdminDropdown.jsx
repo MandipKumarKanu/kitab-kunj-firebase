@@ -39,7 +39,7 @@ const AdminDropdown = () => {
         to="#"
       >
         <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-black uppercase">
+          <span className="block text-sm font-medium text-white uppercase">
             {currentUser?.displayName} (Admin)
           </span>
         </span>
@@ -48,10 +48,10 @@ const AdminDropdown = () => {
           <FontAwesomeIcon
             icon={faUser}
             size="lg"
-            className="text-DarkColor cursor-pointer ml-3"
+            className="text-white cursor-pointer ml-3"
           />
           <svg
-            className="hidden fill-current sm:block"
+            className="hidden fill-white sm:block"
             width="12"
             height="8"
             viewBox="0 0 12 8"

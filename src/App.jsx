@@ -31,6 +31,9 @@ import BillingAndOrderSummary from "./components/BillingAndOrderSummary";
 import FAQ from "./components/FAQ";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import PaymentVerification from "./components/PaymentVerification";
+import MyDeclinedBooks from "./components/admin/MyDeclinedBooks";
+import BuyRequests from "./components/admin/BuyRequests";
+import MyApprovedBooks from "./components/admin/MyApprovedBooks";
 
 const App = () => {
   const currentUser = auth.currentUser;
@@ -93,14 +96,18 @@ const App = () => {
           <Route element={<AdminLayout />}>
             <Route path="/admin/home" element={<AdminDashboard />} />
             <Route path="/admin/toapprove" element={<PendingApproval />} />
+            <Route path="/admin/mydeclined" element={<MyDeclinedBooks />} />
+            <Route path="/admin/myapproved/" element={<MyApprovedBooks />} />
+            <Route path="/admin/buy-requests" element={<BuyRequests />} />
+
             <Route
               path="/admin/approvedbooks"
               element={<ViewApprovedBooks />}
             />
-            <Route
+            {/* <Route
               path="/admin/declineddbooks"
               element={<ViewDeclinedBooks />}
-            />
+            /> */}
           </Route>
         </Routes>
       </div>

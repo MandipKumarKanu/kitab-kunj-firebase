@@ -13,6 +13,7 @@ import { db } from "../../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
+import { formatPrice } from "../utils/formatPrice";
 
 const PendingApproval = () => {
   const [books, setBooks] = useState([]);
@@ -80,11 +81,11 @@ const PendingApproval = () => {
 
       await deleteDoc(bookRef);
 
-      console.log(selectedBook)
+      console.log(selectedBook);
 
       const datatoSend = {
         sellerId: sellerId || selectedBook.sellerId,
-        bookId
+        bookId,
       };
 
       await sendNotification(
@@ -122,6 +123,8 @@ const PendingApproval = () => {
 
       await setDoc(doc(db, "declinedBooks", bookId), {
         ...bookData,
+        feedback,
+
         declinedAt: new Date(),
       });
 
@@ -129,10 +132,10 @@ const PendingApproval = () => {
       const datatoSend = {
         feedback,
         sellerId: sellerId || selectedBook.sellerId,
-        bookId
+        bookId,
       };
 
-      console.log(bookId)
+      console.log(bookId);
 
       await sendNotification(
         datatoSend,
@@ -205,12 +208,6 @@ const PendingApproval = () => {
     setSelectedBook(null);
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
-  };
 
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">

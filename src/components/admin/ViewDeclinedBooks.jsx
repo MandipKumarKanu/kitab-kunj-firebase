@@ -15,6 +15,7 @@ import { db } from "../../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
+import { formatPrice } from "../utils/formatPrice";
 
 const ViewDeclinedBooks = () => {
   const [books, setBooks] = useState([]);
@@ -80,7 +81,7 @@ const ViewDeclinedBooks = () => {
   };
 
   const handleApprove = async (book) => {
-    console.log(book)
+    console.log(book);
     try {
       const approvedBookRef = doc(db, "approvedBooks", book.id);
       await setDoc(approvedBookRef, book);
@@ -104,13 +105,6 @@ const ViewDeclinedBooks = () => {
   const closeDialog = () => {
     setDialogOpen(false);
     setSelectedBook(null);
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(price);
   };
 
   return (
