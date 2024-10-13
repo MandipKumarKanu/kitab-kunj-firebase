@@ -4,12 +4,14 @@ import { RiInstagramFill, RiTwitterXFill } from "react-icons/ri";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const currentDate = new Date().toLocaleDateString();
+
   return (
-    <footer className="bg-primaryColor text-white z-50 rounded-t-3xl mt-8 md:mt-0 ">
+    <footer className="bg-gradient-to-b from-purple-900 to-purple-700 text-white z-50 rounded-t-3xl mt-8 md:mt-0">
       <div className="flex flex-col md:flex-row justify-between p-8 md:px-32 px-5">
-        <div>
+        <div className="flex flex-col mb-6">
           <h1 className="font-semibold text-3xl pb-4">Kitab Kunj</h1>
-          <div className="flex gap-5 ml-3">
+          <div className="flex gap-5">
             <FaFacebook
               size={32}
               className="hover:scale-110 cursor-pointer transition duration-300 ease-in-out"
@@ -24,40 +26,82 @@ const Footer = () => {
             />
           </div>
         </div>
-        <div>
-          <h1 className="font-medium text-lg pb-4 pt-5 md:pt-0">All Books</h1>
+        <div className="flex flex-col mb-6">
+          <h1 className="font-medium text-lg pb-4">All Books</h1>
           <div className="flex flex-col gap-2">
-            
+            {/* Add links to specific books here */}
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              Fiction
+            </Link>
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              Non-Fiction
+            </Link>
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              Science
+            </Link>
           </div>
         </div>
-        <div>
-          <div>
-            <h1 className="font-medium text-lg pb-4 pt-5 md:pt-0">Company</h1>
-            <div className="flex flex-col gap-2">
-              
-            </div>
+        <div className="flex flex-col mb-6">
+          <h1 className="font-medium text-lg pb-4">Company</h1>
+          <div className="flex flex-col gap-2">
+            {/* Add company-related links here */}
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              About Us
+            </Link>
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              Careers
+            </Link>
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
+              Privacy Policy
+            </Link>
           </div>
         </div>
-        <div className="w-full md:w-1/4">
-          <h1 className="font-medium text-lg pb-4 pt-5 md:pt-0">Contact us</h1>
+        <div className="w-full md:w-1/4 mb-6">
+          <h1 className="font-medium text-lg pb-4">Contact Us</h1>
           <div className="flex flex-col gap-2">
-            <Link to="/">
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
               Birgunj, Parsa, Nepal
             </Link>
-            <Link to="/">
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
               noobs@development.com
             </Link>
-            <Link to="/">
+            <Link
+              to="/"
+              className="hover:translate-x-1 transition-transform duration-300 ease-in-out"
+            >
               +977 980-111-1234
             </Link>
           </div>
         </div>
       </div>
-      <div>
-        <p className="text-center py-4">
-          developed by
-          <span className="text-black"> Noob Devs </span>
-          {"\u00A9"} | All rights reserved
+      <div className="text-center py-4">
+        <p>
+          Developed by <span className="font-semibold">Noob Devs</span> | &copy;{" "}
+          {new Date().getFullYear()} | All rights reserved
         </p>
       </div>
     </footer>
