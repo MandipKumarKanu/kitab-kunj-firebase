@@ -14,25 +14,40 @@ import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { RWebShare } from "react-web-share";
 import { useLocation, useParams } from "react-router-dom";
 import { auth, db } from "../config/firebase.config";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 import Magnifier from "react18-image-magnifier";
 import ShrinkDescription from "./utils/ShrinkDescription";
 import { fetchWishlistStatus, toggleWishlist } from "../hooks/Wishlist.Hook";
+import { useCart } from "./context/CartContext";
 
 const BookDesc = () => {
-  const currentUser = auth.currentUser;
-  const { uid } = currentUser;
-
+  const { setCartLength } = useCart();
+  const [isLoading, setIsLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [book, setBook] = useState(null);
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
   const { id } = useParams();
   const location = useLocation();
 
   useEffect(() => {
-    fetchBook();
-    checkWishlistStatus();
-  }, [id]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      await fetchBook();
+      if (auth.currentUser?.uid) {
+        await Promise.all([checkWishlistStatus(), checkCartStatus()]);
+      }
+      setIsLoading(false);
+    };
+    fetchData();
+  }, [id, auth.currentUser]);
 
   const fetchBook = async () => {
     try {
@@ -50,23 +65,61 @@ const BookDesc = () => {
   };
 
   const checkWishlistStatus = async () => {
-    const wishlisted = await fetchWishlistStatus(uid, id);
+    const wishlisted = await fetchWishlistStatus(auth.currentUser.uid, id);
     setIsWishlisted(wishlisted);
   };
 
+  const checkCartStatus = async () => {
+    try {
+      const userDoc = doc(db, "users", auth.currentUser.uid);
+      const userSnapshot = await getDoc(userDoc);
+      if (userSnapshot.exists()) {
+        const userData = userSnapshot.data();
+        setIsInCart(userData.cart && userData.cart.includes(id));
+      }
+    } catch (error) {
+      console.error("Error checking cart status:", error);
+    }
+  };
+
   const handleWishlist = useCallback(async () => {
-    if (isWishlistLoading) return;
+    if (isWishlistLoading || !auth.currentUser) return;
 
     setIsWishlistLoading(true);
     try {
-      await toggleWishlist(uid, id);
+      await toggleWishlist(auth.currentUser.uid, id);
       setIsWishlisted((prev) => !prev);
     } catch (error) {
       console.error("Error toggling wishlist:", error);
     } finally {
       setIsWishlistLoading(false);
     }
-  }, [uid, id, isWishlistLoading]);
+  }, [id, isWishlistLoading]);
+
+  const handleAddToCart = async () => {
+    if (isCartLoading || !auth.currentUser) return;
+
+    setIsCartLoading(true);
+    try {
+      const userDoc = doc(db, "users", auth.currentUser.uid);
+      if (isInCart) {
+        await updateDoc(userDoc, {
+          cart: arrayRemove(id),
+        });
+        setCartLength((prev) => prev - 1);
+      } else {
+        await updateDoc(userDoc, {
+          cart: arrayUnion(id),
+        });
+        setCartLength((prev) => prev + 1);
+      }
+      setIsInCart((prev) => !prev);
+    } catch (error) {
+      console.error("Error updating cart:", error);
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
 
   const currentUrl = `${window.location.origin}${location.pathname}`;
 
@@ -77,8 +130,12 @@ const BookDesc = () => {
     }).format(price);
   };
 
-  if (!book) {
+  if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (!book) {
+    return <div>Book not found</div>;
   }
 
   return (
@@ -266,6 +323,21 @@ const BookDesc = () => {
                   </span>
                 </div>
               )}
+
+              <button
+                onClick={handleAddToCart}
+                disabled={isCartLoading}
+                className="w-full px-6 py-3 mb-3 bg-gradient-to-t from-blue-500 to-blue-600 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
+              >
+                {isCartLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                    {isInCart ? "Remove from Cart" : "Add to Cart"}
+                  </>
+                )}
+              </button>
 
               <button className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor">
                 <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
