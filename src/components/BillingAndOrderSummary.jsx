@@ -7,17 +7,23 @@ import {
   arrayUnion,
   collection,
   addDoc,
+  setDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
 import BillingDetailsModal from "./BillingDetailsModal";
+import { API_LINK } from "./helper/api";
+import { useCart } from "./context/CartContext";
 
 const MAX_ADDRESSES = 5;
 
 function BillingAndOrderSummary() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { setCartLength } = useCart();
+
   const checkoutData = location.state?.checkoutData;
   const platformFee = checkoutData ? checkoutData.subtotal * 0.1 : 0;
   const totalPayment = checkoutData
@@ -115,6 +121,7 @@ function BillingAndOrderSummary() {
         total_price: book.sellingPrice,
         quantity: 1,
         unit_price: book.sellingPrice,
+        sellerId: book.sellerId,
       })),
       amount: totalPayment,
     };
@@ -132,16 +139,13 @@ function BillingAndOrderSummary() {
 
     if (paymentMethod === "wallet") {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/payment/initiate",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(orderData),
-          }
-        );
+        const response = await fetch(`${API_LINK}/api/payment/initiate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderData),
+        });
 
         if (response.ok) {
           const result = await response.json();
@@ -153,8 +157,30 @@ function BillingAndOrderSummary() {
       }
     } else if (paymentMethod === "credit") {
       try {
-        const orderPendingRef = collection(db, "orders");
-        await addDoc(orderPendingRef, {
+        const unavailableBooks = [];
+        for (const book of orderData.product_details) {
+          const bookRef = doc(db, "approvedBooks", book.identity);
+          const bookDoc = await getDoc(bookRef);
+
+          if (!bookDoc.exists() || bookDoc.data().listStatus !== true) {
+            unavailableBooks.push(book.name);
+          }
+        }
+
+        if (unavailableBooks.length > 0) {
+          alert(
+            `The following books are no longer available: ${unavailableBooks.join(
+              ", "
+            )}`
+          );
+          return;
+        }
+
+        const orderPendingRef = collection(db, "pendingOrder");
+        const newOrderRef = doc(orderPendingRef);
+        const orderId = newOrderRef.id;
+
+        await setDoc(doc(orderPendingRef, orderData.purchaseOrderId), {
           ...orderData,
           purchasedBy: auth.currentUser.uid,
           createdAt: new Date(),
@@ -162,8 +188,30 @@ function BillingAndOrderSummary() {
           paymentMethod,
         });
 
+        for (const book of orderData.product_details) {
+          const bookRef = doc(db, "approvedBooks", book.identity);
+
+          await updateDoc(bookRef, { listStatus: false });
+
+          const verifyOrdersRef = collection(db, "verifyOrders");
+          await addDoc(verifyOrdersRef, {
+            customerInfo: orderData.customerInfo,
+            product_detail: book,
+            pendingOrderId: orderId,
+            sellerId: book.sellerId,
+            createdAt: new Date(),
+          });
+
+          const userId = auth.currentUser.uid;
+          const userRef = doc(db, "users", userId);
+          await updateDoc(userRef, {
+            cart: arrayRemove(book.identity),
+          });
+          setCartLength((prev) => prev - 1);
+        }
+
         console.log(orderData);
-        navigate("/order-success", { state: { orderData } });
+        navigate("/order-success", { state: { orderData: dataToSave } });
       } catch (error) {
         console.error("Failed to create order:", error);
       }

@@ -56,15 +56,37 @@
 }
 /*  */
 
-.magnifier-image{
+.magnifier-image {
   /* w-full shadow-lg h-full object-cover rounded-lg" */
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
 }
-.magnifier{
-  /* w-full shadow-lg h-full object-cover rounded-lg" */
+.magnifier {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
+}
+
+@media print {
+  body {
+    visibility: hidden;
+  }
+  #invoice-content {
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    page-break-after: always;
+    visibility: visible;
+    position: absolute;
+    top: 0;
+  }
+  button,
+  .print:hidden {
+    display: none;
+  }
+  @page {
+    size: auto;
+    margin: 20mm;
+  }
 }

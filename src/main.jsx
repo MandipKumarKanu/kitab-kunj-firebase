@@ -7,13 +7,13 @@ import { BrowserRouter, Routes } from "react-router-dom";
 import { CartContextProvider } from "./components/context/CartContext.jsx";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <AuthContextProvider>
-      <CartContextProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </CartContextProvider>
-    </AuthContextProvider>
-  </StrictMode>
+  // <StrictMode>
+  <AuthContextProvider>
+    <CartContextProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </CartContextProvider>
+  </AuthContextProvider>
+  // </StrictMode>
 );

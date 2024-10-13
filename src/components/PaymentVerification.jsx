@@ -1,9 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  addDoc,
+  arrayRemove,
+} from "firebase/firestore";
 import { db, auth } from "../config/firebase.config";
+import { API_LINK } from "./helper/api";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCircleCheck,
+  faCircleXmark,
+  faTriangleExclamation,
+  faSpinner,
+} from "@fortawesome/free-solid-svg-icons";
+import { useCart } from "./context/CartContext";
 
 function PaymentVerification() {
+  const{setCartLength} = useCart()
   const [status, setStatus] = useState("verifying");
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,32 +32,45 @@ function PaymentVerification() {
       const pidx = params.get("pidx");
 
       const pendingOrder = JSON.parse(localStorage.getItem("pendingOrder"));
+      console.log(pendingOrder);
 
-      console.log("pidx", pidx, pendingOrder);
       if (!pidx || !pendingOrder) {
         setStatus("error");
         return;
       }
 
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/payment/verify",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ pidx }),
-          }
-        );
+        const response = await fetch(`${API_LINK}/api/payment/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pidx }),
+        });
 
         const verificationResult = await response.json();
 
-        console.log(verificationResult);
-
         if (verificationResult.status === "Completed") {
-          const orderPendingRef = collection(db, "orderPending");
-          await addDoc(orderPendingRef, {
+          const unavailableBooks = [];
+          for (const book of pendingOrder.product_details) {
+            const bookRef = doc(db, "approvedBooks", book.identity);
+            const bookDoc = await getDoc(bookRef);
+
+            if (!bookDoc.exists() || bookDoc.data().listStatus !== true) {
+              unavailableBooks.push(book.name);
+            }
+          }
+
+          if (unavailableBooks.length > 0) {
+            setStatus("partialError");
+            return;
+          }
+
+          const orderPendingRef = collection(db, "pendingOrders");
+          const newOrderRef = doc(
+            orderPendingRef,
+            pendingOrder.purchaseOrderId
+          );
+
+          await setDoc(newOrderRef, {
             ...pendingOrder,
             purchasedBy: auth.currentUser.uid,
             createdAt: new Date(),
@@ -47,6 +78,27 @@ function PaymentVerification() {
             paymentDetails: verificationResult,
             paymentMethod: "khalti",
           });
+
+          for (const book of pendingOrder.product_details) {
+            const bookRef = doc(db, "approvedBooks", book.identity);
+            await updateDoc(bookRef, { listStatus: false });
+
+            const verifyOrdersRef = collection(db, "verifyOrders");
+            await addDoc(verifyOrdersRef, {
+              customerInfo: pendingOrder.customerInfo,
+              product_detail: book,
+              pendingOrderId: pendingOrder.purchaseOrderId,
+              sellerId: book.sellerId,
+              createdAt: new Date(),
+            });
+
+            const userId = auth.currentUser.uid;
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+              cart: arrayRemove(book.identity),
+            });
+            setCartLength((prev) => prev - 1);
+          }
 
           localStorage.removeItem("pendingOrder");
           setStatus("success");
@@ -65,66 +117,66 @@ function PaymentVerification() {
     verifyPayment();
   }, [location, navigate]);
 
+  const statusConfig = {
+    verifying: {
+      icon: faSpinner,
+      title: "Verifying Payment",
+      message: "Please wait while we confirm your payment...",
+      color: "text-blue-500",
+      spin: true,
+    },
+    success: {
+      icon: faCircleCheck,
+      title: "Payment Successful!",
+      message: "Redirecting to order confirmation...",
+      color: "text-green-500",
+    },
+    error: {
+      icon: faCircleXmark,
+      title: "Payment Verification Failed",
+      message:
+        "We couldn't verify your payment. Please try again or contact support.",
+      color: "text-red-500",
+      action: {
+        text: "Return to Cart",
+        onClick: () => navigate("/cart"),
+      },
+    },
+    partialError: {
+      icon: faTriangleExclamation,
+      title: "Order Processing Issue",
+      message:
+        "Some books in your order are no longer available. Your payment has been processed, but we couldn't complete your order. Please contact support for assistance.",
+      color: "text-yellow-500",
+      action: {
+        text: "Contact Support",
+        onClick: () => navigate("/contact-support"),
+      },
+    },
+  };
+
+  const currentStatus = statusConfig[status];
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      {status === "verifying" && (
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primaryColor mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold mb-2">Verifying Payment</h2>
-          <p>Please wait while we confirm your payment...</p>
-        </div>
-      )}
-
-      {status === "success" && (
-        <div className="text-center">
-          <svg
-            className="w-16 h-16 text-green-500 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          <h2 className="text-xl font-semibold mb-2">Payment Successful!</h2>
-          <p>Redirecting to order confirmation...</p>
-        </div>
-      )}
-
-      {status === "error" && (
-        <div className="text-center">
-          <svg
-            className="w-16 h-16 text-red-500 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-          <h2 className="text-xl font-semibold mb-2">
-            Payment Verification Failed
-          </h2>
-          <p className="mb-4">
-            We couldn't verify your payment. Please try again or contact
-            support.
-          </p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+        <FontAwesomeIcon
+          icon={currentStatus.icon}
+          className={`text-6xl ${currentStatus.color} ${
+            currentStatus.spin ? "animate-spin" : ""
+          } mb-6`}
+        />
+        <h2 className="text-2xl font-semibold mb-4">{currentStatus.title}</h2>
+        <p className="text-gray-600 mb-6">{currentStatus.message}</p>
+        {currentStatus.action && (
           <button
-            onClick={() => navigate("/cart")}
-            className="px-4 py-2 bg-primaryColor text-white rounded-full"
+            onClick={currentStatus.action.onClick}
+            className="px-6 py-2 bg-primaryColor text-white rounded-full hover:bg-opacity-90 transition duration-300"
           >
-            Return to Cart
+            {currentStatus.action.text}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -143,7 +143,7 @@ const Cart = () => {
     );
   };
 
-  // console.log(cartBooks)
+  console.log(cartBooks);
   const prepareCheckoutData = () => {
     const selectedBookDetails = cartBooks
       .filter((book) => selectedBooks[book.id])
@@ -153,6 +153,7 @@ const Cart = () => {
         author: book.author,
         sellingPrice: book.sellingPrice,
         images: book.images[0],
+        sellerId: book.sellerId,
       }));
 
     const checkoutData = {

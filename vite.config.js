@@ -5,6 +5,13 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   build: {
-    chunkSizeWarningLimit: 2000, 
+    chunkSizeWarningLimit: 2000,
+  },
+  proxy: {
+    "/khalti": {
+      target: "https://esewa-int-backend.vercel.app/",
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/khalti/, ""),
+    },
   },
 });

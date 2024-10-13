@@ -19,7 +19,8 @@ const RentPage = () => {
       const q = query(
         booksRef,
         where("availability", "==", "rent"),
-        where("sellerId", "!=", currentUser?.uid || "")
+        where("sellerId", "!=", currentUser?.uid || ""),
+        where("listStatus", "==", true)
       );
       const querySnapshot = await getDocs(q);
 
