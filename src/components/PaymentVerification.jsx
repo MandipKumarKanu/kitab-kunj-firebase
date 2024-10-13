@@ -19,9 +19,10 @@ import {
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCart } from "./context/CartContext";
+import { sendEmailToSellers } from "./sendEmailToSellers";
 
 function PaymentVerification() {
-  const{setCartLength} = useCart()
+  const { setCartLength } = useCart();
   const [status, setStatus] = useState("verifying");
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,7 +65,7 @@ function PaymentVerification() {
             return;
           }
 
-          const orderPendingRef = collection(db, "pendingOrders");
+          const orderPendingRef = collection(db, "pendingOrder");
           const newOrderRef = doc(
             orderPendingRef,
             pendingOrder.purchaseOrderId
@@ -81,7 +82,7 @@ function PaymentVerification() {
 
           for (const book of pendingOrder.product_details) {
             const bookRef = doc(db, "approvedBooks", book.identity);
-            await updateDoc(bookRef, { listStatus: false });
+            // await updateDoc(bookRef, { listStatus: false });
 
             const verifyOrdersRef = collection(db, "verifyOrders");
             await addDoc(verifyOrdersRef, {
@@ -97,11 +98,24 @@ function PaymentVerification() {
             await updateDoc(userRef, {
               cart: arrayRemove(book.identity),
             });
+
+            const notificationRef = collection(db, "notification");
+            await addDoc(notificationRef, {
+              bookTitle: book.name,
+              message: `Your book "${book.name}" has been requested for purchase.`,
+              source: "buy",
+              read: false,
+              sellerId: book.sellerId,
+              timestamp: Timestamp.now(),
+            });
+
             setCartLength((prev) => prev - 1);
           }
 
           localStorage.removeItem("pendingOrder");
           setStatus("success");
+          sendEmailToSellers(pendingOrder);
+
           setTimeout(() => {
             navigate("/order-success", { state: { orderData: pendingOrder } });
           }, 2000);

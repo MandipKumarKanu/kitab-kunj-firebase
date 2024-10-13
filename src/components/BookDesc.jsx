@@ -324,20 +324,22 @@ const BookDesc = () => {
                 </div>
               )}
 
-              <button
-                onClick={handleAddToCart}
-                disabled={isCartLoading}
-                className="w-full px-6 py-3 mb-3 bg-gradient-to-t from-blue-500 to-blue-600 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
-              >
-                {isCartLoading ? (
-                  <FontAwesomeIcon icon={faSpinner} spin />
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                    {isInCart ? "Remove from Cart" : "Add to Cart"}
-                  </>
-                )}
-              </button>
+              {book.availability !== "rent" && (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isCartLoading}
+                  className="w-full px-6 py-3 mb-3 bg-gradient-to-t from-blue-500 to-blue-600 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
+                >
+                  {isCartLoading ? (
+                    <FontAwesomeIcon icon={faSpinner} spin />
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+                      {isInCart ? "Remove from Cart" : "Add to Cart"}
+                    </>
+                  )}
+                </button>
+              )}
 
               <button className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor">
                 <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />

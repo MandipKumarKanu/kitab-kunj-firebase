@@ -1,3 +1,7 @@
+*{
+  scroll-behavior: smooth;
+}
+
 /* Go to top btn */
 .top-btn {
   width: 45px;

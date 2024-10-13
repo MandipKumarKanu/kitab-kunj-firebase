@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import ClickOutside from "./ClickOutside";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUser,
-  faBoxOpen,
+  faUsers,
+  faBook,
   faSignOutAlt,
-  faHeart,
+  faCog,
 } from "@fortawesome/free-solid-svg-icons";
-import { auth } from "../config/firebase.config";
-import { useAuth } from "../components/context/AuthContext";
-import { useLogoutHook } from "./useSignHook";
+import ClickOutside from "../../../hooks/ClickOutside";
+import { auth } from "../../../config/firebase.config";
+import { useAuth } from "../../context/AuthContext";
+import { useLogoutHook } from "../../../hooks/useSignHook";
 
-const DropdownUser = () => {
+const AdminDropdown = () => {
   const currentUser = auth.currentUser;
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -39,7 +40,7 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black uppercase">
-            {currentUser?.displayName}
+            {currentUser?.displayName} (Admin)
           </span>
         </span>
 
@@ -76,34 +77,45 @@ const DropdownUser = () => {
           <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-4">
             <li>
               <Link
-                to="/profile"
+                to="/admin/profile"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
                 <FontAwesomeIcon icon={faUser} size="lg" />
-                My Profile
+                Admin Profile
               </Link>
             </li>
 
             <li>
               <Link
-                to="/myapproved"
+                to="/admin/manage-users"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
-                <FontAwesomeIcon icon={faBoxOpen} size="lg" />
-                My Books
+                <FontAwesomeIcon icon={faUsers} size="lg" />
+                Manage Users
               </Link>
             </li>
 
             <li>
               <Link
-                to="/wishlist"
+                to="/admin/manage-books"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}
               >
-                <FontAwesomeIcon icon={faHeart} size="lg" />
-                Wishlist
+                <FontAwesomeIcon icon={faBook} size="lg" />
+                Manage Books
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/admin/settings"
+                className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+                onClick={() => setDropdownOpen(false)}
+              >
+                <FontAwesomeIcon icon={faCog} size="lg" />
+                Settings
               </Link>
             </li>
           </ul>
@@ -130,4 +142,4 @@ const DropdownUser = () => {
   );
 };
 
-export default DropdownUser;
+export default AdminDropdown;

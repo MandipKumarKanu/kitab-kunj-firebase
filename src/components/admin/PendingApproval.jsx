@@ -80,8 +80,11 @@ const PendingApproval = () => {
 
       await deleteDoc(bookRef);
 
+      console.log(selectedBook)
+
       const datatoSend = {
         sellerId: sellerId || selectedBook.sellerId,
+        bookId
       };
 
       await sendNotification(
@@ -126,7 +129,10 @@ const PendingApproval = () => {
       const datatoSend = {
         feedback,
         sellerId: sellerId || selectedBook.sellerId,
+        bookId
       };
+
+      console.log(bookId)
 
       await sendNotification(
         datatoSend,

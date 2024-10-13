@@ -9,6 +9,7 @@ import {
   addDoc,
   setDoc,
   arrayRemove,
+  Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,6 +17,7 @@ import { faEye, faTrash } from "@fortawesome/free-solid-svg-icons";
 import BillingDetailsModal from "./BillingDetailsModal";
 import { API_LINK } from "./helper/api";
 import { useCart } from "./context/CartContext";
+import { sendEmailToSellers } from "./sendEmailToSellers";
 
 const MAX_ADDRESSES = 5;
 
@@ -191,7 +193,7 @@ function BillingAndOrderSummary() {
         for (const book of orderData.product_details) {
           const bookRef = doc(db, "approvedBooks", book.identity);
 
-          await updateDoc(bookRef, { listStatus: false });
+          // await updateDoc(bookRef, { listStatus: false });
 
           const verifyOrdersRef = collection(db, "verifyOrders");
           await addDoc(verifyOrdersRef, {
@@ -207,8 +209,20 @@ function BillingAndOrderSummary() {
           await updateDoc(userRef, {
             cart: arrayRemove(book.identity),
           });
+
+          const notificationRef = collection(db, "notification");
+          await addDoc(notificationRef, {
+            bookTitle: book.name,
+            message: `Your book "${book.name}" has been requested for purchase.`,
+            source: "buy",
+            read: false,
+            sellerId: book.sellerId,
+            timestamp: Timestamp.now(),
+          });
           setCartLength((prev) => prev - 1);
         }
+
+        sendEmailToSellers(dataToSave);
 
         console.log(orderData);
         navigate("/order-success", { state: { orderData: dataToSave } });
@@ -398,7 +412,7 @@ function BillingAndOrderSummary() {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>Rs. {checkoutData?.subtotal.toFixed(2)}</span>
+                <span>Rs. {checkoutData?.subtotal?.toFixed(2) || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping:</span>
