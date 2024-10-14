@@ -87,6 +87,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               My Approved Books
             </NavItem>
           </li>
+          <li>
+            <NavItem to="/admin/orderconfirmation" icon={faBook}>
+              Order Confirmation
+            </NavItem>
+          </li>
         </ul>
       </nav>
     </div>

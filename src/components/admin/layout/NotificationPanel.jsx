@@ -75,10 +75,12 @@ const NotificationPanel = () => {
     return "Unknown date";
   };
 
+  
   const handleNotificationClick = (notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
+    console.log(notification)
 
     if (notification.status === "declined") {
       navigate("/admin/mydeclined", {
@@ -89,7 +91,9 @@ const NotificationPanel = () => {
         state: { bookId: notification.id },
       });
     } else if (notification.source === "buy") {
-      navigate("/admin/buy-requests");
+      navigate("/admin/orderconfirmation", {
+        state: { orderId: notification.bookId },
+      });
     }
 
     setIsOpen(false);

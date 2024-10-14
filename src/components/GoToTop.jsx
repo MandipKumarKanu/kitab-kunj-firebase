@@ -1,34 +1,66 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSpring, animated, config } from "react-spring";
 
 const GotoTop = () => {
-  const [isvisible, setIsVisible] = useState(false);
-  const gotoBtn = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const buttonAnimation = useSpring({
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible
+      ? "translate3d(0,0px,0) rotate(0deg)"
+      : "translate3d(0,50px,0) rotate(180deg)",
+    config: config.wobbly,
+  });
+
+  const gotoTop = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
+
   const listenToScroll = () => {
-    let heightToHidden = 80;
+    const heightToHidden = 250;
     const winScroll =
       document.body.scrollTop || document.documentElement.scrollTop;
-    if (winScroll > heightToHidden) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
+    setIsVisible(winScroll > heightToHidden);
   };
+
   useEffect(() => {
     window.addEventListener("scroll", listenToScroll);
+    return () => window.removeEventListener("scroll", listenToScroll);
   }, []);
+
   return (
-    <>
-      {isvisible && (
-        <button className="top-btn " onClick={gotoBtn}>
-          <svg height="1.2em" className="arrow" viewBox="0 0 512 512">
-            <path d="M233.4 105.4c12.5-12.5 32.8-12.5 45.3 0l192 192c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L256 173.3 86.6 342.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l192-192z"></path>
-          </svg>
-          <p className="text">Back to Top</p>
-        </button>
-      )}
-    </>
+    <animated.button
+      style={buttonAnimation}
+      className="goto-top-btn fixed bottom-8 right-8 z-50 flex items-center justify-center focus:outline-none"
+      onClick={gotoTop}
+    >
+      <div className="rocket w-6 h-6">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M4.5 16.5C3 15.5 3 14.5 3 12C3 8 12 3 12 3C12 3 21 8 21 12C21 14.5 21 15.5 19.5 16.5"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12 3V15"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M19.5 16.5L12 21L4.5 16.5"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <span className="tooltip">Back to Top</span>
+    </animated.button>
   );
 };
 

@@ -34,6 +34,7 @@ import PaymentVerification from "./components/PaymentVerification";
 import MyDeclinedBooks from "./components/admin/MyDeclinedBooks";
 import BuyRequests from "./components/admin/BuyRequests";
 import MyApprovedBooks from "./components/admin/MyApprovedBooks";
+import OrderConfirmation from "./components/OrderConfirmation";
 
 const App = () => {
   const currentUser = auth.currentUser;
@@ -99,6 +100,10 @@ const App = () => {
             <Route path="/admin/mydeclined" element={<MyDeclinedBooks />} />
             <Route path="/admin/myapproved/" element={<MyApprovedBooks />} />
             <Route path="/admin/buy-requests" element={<BuyRequests />} />
+            <Route
+              path="/admin/orderConfirmation"
+              element={<OrderConfirmation />}
+            />
 
             <Route
               path="/admin/approvedbooks"

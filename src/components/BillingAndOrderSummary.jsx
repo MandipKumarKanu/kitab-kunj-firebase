@@ -180,7 +180,7 @@ function BillingAndOrderSummary() {
 
         const orderPendingRef = collection(db, "pendingOrder");
         const newOrderRef = doc(orderPendingRef);
-        const orderId = newOrderRef.id;
+        // const orderId = newOrderRef.id;
 
         await setDoc(doc(orderPendingRef, orderData.purchaseOrderId), {
           ...orderData,
@@ -190,6 +190,8 @@ function BillingAndOrderSummary() {
           paymentMethod,
         });
 
+        let index = 0;
+
         for (const book of orderData.product_details) {
           const bookRef = doc(db, "approvedBooks", book.identity);
 
@@ -197,11 +199,13 @@ function BillingAndOrderSummary() {
 
           const verifyOrdersRef = collection(db, "verifyOrders");
           await addDoc(verifyOrdersRef, {
+            purchaseOrderId: orderData.purchaseOrderId,
             customerInfo: orderData.customerInfo,
             product_detail: book,
-            pendingOrderId: orderId,
+            // pendingOrderId: orderId,
             sellerId: book.sellerId,
             createdAt: new Date(),
+            index: index,
           });
 
           const userId = auth.currentUser.uid;
@@ -221,6 +225,7 @@ function BillingAndOrderSummary() {
             timestamp: Timestamp.now(),
           });
           setCartLength((prev) => prev - 1);
+          index++;
         }
 
         sendEmailToSellers(dataToSave);

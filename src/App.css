@@ -1,64 +1,6 @@
-*{
+* {
   scroll-behavior: smooth;
 }
-
-/* Go to top btn */
-.top-btn {
-  width: 45px;
-  height: 45px;
-  background-color: #4d4c4c9d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  position: fixed;
-  bottom: 5rem;
-  right: 2rem;
-  z-index: 10;
-  display: flex;
-  animation: slide-in-bottom 0.7s;
-}
-
-.arrow path {
-  fill: white;
-}
-
-.text {
-  font-size: 0.8em;
-  width: 100px;
-  position: absolute;
-  color: rgb(0, 0, 0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  bottom: -25px;
-  opacity: 0;
-  transition-duration: 0.7s;
-}
-
-.top-btn:hover .text {
-  opacity: 1;
-  transition-duration: 0.7s;
-}
-
-.btn:hover .arrow {
-  animation: slide-in-bottom 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-}
-
-@keyframes slide-in-bottom {
-  0% {
-    transform: translateY(10px);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-/*  */
 
 .magnifier-image {
   /* w-full shadow-lg h-full object-cover rounded-lg" */
@@ -92,5 +34,86 @@
   @page {
     size: auto;
     margin: 20mm;
+  }
+}
+
+/* Go to top btn */
+.goto-top-btn {
+  --button-size: 3rem;
+  --button-radius: 50%;
+  --gradient-start: #8b5cf6;
+  --gradient-end: #4f46e5;
+  --hover-lift: -5px;
+  --tooltip-bg: rgba(0, 0, 0, 0.8);
+  --tooltip-text: #ffffff;
+  --tooltip-arrow-size: 6px;
+  --animation-duration: 0.3s;
+}
+
+.goto-top-btn {
+  width: var(--button-size);
+  height: var(--button-size);
+  border-radius: var(--button-radius);
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
+  transition: all var(--animation-duration) ease;
+}
+
+.goto-top-btn:hover {
+  transform: translateY(var(--hover-lift));
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.goto-top-btn .tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity var(--animation-duration) ease;
+}
+
+.goto-top-btn:hover .tooltip {
+  opacity: 1;
+}
+
+.goto-top-btn .tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: calc(var(--tooltip-arrow-size) * -1);
+  border-width: var(--tooltip-arrow-size);
+  border-style: solid;
+  border-color: var(--tooltip-bg) transparent transparent transparent;
+}
+
+@keyframes rocketFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-5deg);
+  }
+}
+
+.goto-top-btn .rocket {
+  animation: rocketFloat 2s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .goto-top-btn {
+    --button-size: 2.5rem;
   }
 }
