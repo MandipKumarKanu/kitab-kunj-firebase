@@ -1,21 +1,42 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 const HeadingText = ({
   fullName = "Featured Books",
   bgName = "FEATURED",
-  fullNameStyle,
-  bgNameStyle,
+  fullNameStyle = "",
+  bgNameStyle = "",
 }) => {
+  const containerRef = useRef(null);
+  const bgTextRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current && bgTextRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        const bgTextWidth = bgTextRef.current.offsetWidth;
+        const scale = (containerWidth / bgTextWidth) * 0.9;
+        bgTextRef.current.style.transform = `scale(${Math.min(scale, 1)})`;
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div
-      className={`relative flex items-center justify-center ${fullNameStyle} min-h-[100px] sm:min-h-[120px] md:min-h-[140px] lg:min-h-[160px] mt-6 sm:mt-8 md:mt-10 overflow-hidden`}
+      ref={containerRef}
+      className={`relative flex items-center justify-center ${fullNameStyle} h-[22vw] min-h-[120px] max-h-[220px] mt-6 sm:mt-8 md:mt-10 overflow-hidden`}
     >
       <div
-        className={`absolute max-w-full ${bgNameStyle} text-4xl sm:text-6xl md:text-8xl lg:text-[11rem] text-gray-300 opacity-40 font-suntage font-bold uppercase tracking-wider whitespace-nowrap`}
+        ref={bgTextRef}
+        className={`absolute ${bgNameStyle} text-[12vw] text-gray-300 opacity-40 font-suntage font-bold uppercase tracking-wider whitespace-nowrap transition-transform duration-300 ease-in-out origin-center`}
+        style={{ willChange: "transform" }}
       >
         {bgName}
       </div>
-      <div className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold relative z-10 text-center font-sfpro uppercase px-4">
+      <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold relative z-10 text-center font-sfpro uppercase px-4 transition-all duration-300 ease-in-out">
         {fullName}
       </div>
     </div>

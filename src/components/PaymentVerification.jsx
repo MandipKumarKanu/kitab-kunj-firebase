@@ -5,9 +5,10 @@ import {
   doc,
   getDoc,
   updateDoc,
-  setDoc,
   addDoc,
   arrayRemove,
+  writeBatch,
+  Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../config/firebase.config";
 import { API_LINK } from "./helper/api";
@@ -50,67 +51,81 @@ function PaymentVerification() {
         const verificationResult = await response.json();
 
         if (verificationResult.status === "Completed") {
+          const batch = writeBatch(db);
           const unavailableBooks = [];
+          let userCartUpdates = [];
+
+          const booksBySeller = pendingOrder.product_details.reduce(
+            (acc, book) => {
+              if (!acc[book.sellerId]) {
+                acc[book.sellerId] = [];
+              }
+              acc[book.sellerId].push(book);
+              return acc;
+            },
+            {}
+          );
+
           for (const book of pendingOrder.product_details) {
             const bookRef = doc(db, "approvedBooks", book.identity);
             const bookDoc = await getDoc(bookRef);
 
             if (!bookDoc.exists() || bookDoc.data().listStatus !== true) {
               unavailableBooks.push(book.name);
+            } else {
+              userCartUpdates.push(book.identity);
             }
           }
 
-          if (unavailableBooks.length > 0) {
-            setStatus("partialError");
-            return;
+          // if (unavailableBooks.length > 0) {
+          //   setStatus("partialError");
+          //   return;
+          // }
+
+          const timestamp = Timestamp.now();
+
+          for (const [sellerId, books] of Object.entries(booksBySeller)) {
+            const sellerAmount = books.reduce(
+              (sum, book) => sum + book.total_price,
+              0
+            );
+
+            const orderRef = await addDoc(collection(db, "orders"), {
+              createdAt: timestamp,
+              status: "pending",
+              paymentMethod: "khalti",
+              customerInfo: pendingOrder.customerInfo,
+              product_details: books,
+              sellerId: sellerId,
+              amount: sellerAmount,
+              userId: auth.currentUser.uid,
+              paymentDetails: verificationResult,
+            });
+
+            const notificationRef = doc(collection(db, "notification"));
+            batch.set(notificationRef, {
+              orderId: orderRef.id,
+              message: "You have an order waiting to be accepted",
+              status: "pending",
+              sellerId: sellerId,
+              timestamp: timestamp,
+              read: false,
+            });
+
+            books.forEach((book) => {
+              const bookRef = doc(db, "approvedBooks", book.identity);
+              batch.update(bookRef, { listStatus: false });
+            });
           }
 
-          const orderPendingRef = collection(db, "pendingOrder");
-          const newOrderRef = doc(
-            orderPendingRef,
-            pendingOrder.purchaseOrderId
-          );
-
-          await setDoc(newOrderRef, {
-            ...pendingOrder,
-            purchasedBy: auth.currentUser.uid,
-            createdAt: new Date(),
-            status: "completed",
-            paymentDetails: verificationResult,
-            paymentMethod: "khalti",
+          const userRef = doc(db, "users", auth.currentUser.uid);
+          batch.update(userRef, {
+            cart: arrayRemove(...userCartUpdates),
           });
 
-          for (const book of pendingOrder.product_details) {
-            const bookRef = doc(db, "approvedBooks", book.identity);
-            // await updateDoc(bookRef, { listStatus: false });
+          await batch.commit();
 
-            const verifyOrdersRef = collection(db, "verifyOrders");
-            await addDoc(verifyOrdersRef, {
-              customerInfo: pendingOrder.customerInfo,
-              product_detail: book,
-              pendingOrderId: pendingOrder.purchaseOrderId,
-              sellerId: book.sellerId,
-              createdAt: new Date(),
-            });
-
-            const userId = auth.currentUser.uid;
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-              cart: arrayRemove(book.identity),
-            });
-
-            const notificationRef = collection(db, "notification");
-            await addDoc(notificationRef, {
-              bookTitle: book.name,
-              message: `Your book "${book.name}" has been requested for purchase.`,
-              source: "buy",
-              read: false,
-              sellerId: book.sellerId,
-              timestamp: Timestamp.now(),
-            });
-
-            setCartLength((prev) => prev - 1);
-          }
+          setCartLength((prevLength) => prevLength - userCartUpdates.length);
 
           localStorage.removeItem("pendingOrder");
           setStatus("success");

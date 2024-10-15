@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   collection,
   getDocs,
@@ -6,11 +6,13 @@ import {
   where,
   doc,
   updateDoc,
-  getDoc,
+  orderBy,
 } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
 import { auth, db } from "../config/firebase.config";
+import { Moon, Sun, Package, User, X } from "lucide-react";
 import { OrderCard } from "./OrderCard";
+import { OrderDetailsDialog } from "./OrderDetailsDialog";
 
 const OrderConfirmation = () => {
   const [orders, setOrders] = useState([]);
@@ -18,17 +20,18 @@ const OrderConfirmation = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false);
-  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [remark, setRemark] = useState("");
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const location = useLocation();
   const user = auth.currentUser;
 
   useEffect(() => {
-    const fetchVerifyOrders = async () => {
+    const fetchOrders = async () => {
       if (user) {
         const q = query(
-          collection(db, "verifyOrders"),
-          where("sellerId", "==", user.uid)
+          collection(db, "orders"),
+          where("sellerId", "==", user.uid),
+          orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
         const fetchedOrders = querySnapshot.docs.map((doc) => ({
@@ -40,10 +43,7 @@ const OrderConfirmation = () => {
 
         const orderIdFromState = location.state?.orderId;
         if (orderIdFromState) {
-          const order = fetchedOrders.find(
-            (b) => b.product_detail.identity === orderIdFromState
-          );
-
+          const order = fetchedOrders.find((o) => o.id === orderIdFromState);
           if (order) {
             setSelectedOrder(order);
             setIsDialogOpen(true);
@@ -52,7 +52,7 @@ const OrderConfirmation = () => {
       }
     };
 
-    fetchVerifyOrders();
+    fetchOrders();
   }, [location, user]);
 
   const handleViewDetails = (order) => {
@@ -60,119 +60,75 @@ const OrderConfirmation = () => {
     setIsDialogOpen(true);
   };
 
-  const formatDate = (seconds) => {
-    return new Date(seconds * 1000).toLocaleString();
-  };
-
   const handleAccept = async () => {
     try {
-      const { purchaseOrderId, index } = selectedOrder;
-
-      const pendingOrderRef = doc(db, "pendingOrder", purchaseOrderId);
-      const pendingOrderDoc = await getDoc(pendingOrderRef);
-
-      if (!pendingOrderDoc.exists()) {
-        console.error("Pending order not found");
-        return;
-      }
-
-      const pendingOrderData = pendingOrderDoc.data();
-      const updatedProductDetails = pendingOrderData.product_details.map(
-        (product, i) => {
-          if (i === index) {
-            return { ...product, status: "approved" };
-          }
-          return product;
-        }
-      );
-
-      await updateDoc(pendingOrderRef, {
-        product_details: updatedProductDetails,
-      });
-
+      const orderRef = doc(db, "orders", selectedOrder.id);
+      await updateDoc(orderRef, { status: "accepted" });
       setOrders((prevOrders) =>
         prevOrders.map((o) =>
-          o.id === selectedOrder.id ? { ...o, status: "approved" } : o
+          o.id === selectedOrder.id ? { ...o, status: "accepted" } : o
         )
       );
-
       setIsAcceptDialogOpen(false);
+      setIsDialogOpen(false);
     } catch (error) {
       console.error("Error accepting order:", error);
     }
   };
 
-  const handleReject = async () => {
+  const handleCancel = async () => {
     try {
-      const { purchaseOrderId, index } = selectedOrder;
-
-      const pendingOrderRef = doc(db, "pendingOrder", purchaseOrderId);
-      const pendingOrderDoc = await getDoc(pendingOrderRef);
-
-      if (!pendingOrderDoc.exists()) {
-        console.error("Pending order not found");
-        return;
-      }
-
-      const pendingOrderData = pendingOrderDoc.data();
-      const updatedProductDetails = pendingOrderData.product_details.map(
-        (product, i) => {
-          if (i === index) {
-            return { ...product, status: "rejected", remark: remark };
-          }
-          return product;
-        }
-      );
-
-      await updateDoc(pendingOrderRef, {
-        product_details: updatedProductDetails,
+      const orderRef = doc(db, "orders", selectedOrder.id);
+      await updateDoc(orderRef, {
+        status: "cancelled",
+        cancelReason: cancelReason,
       });
-
       setOrders((prevOrders) =>
         prevOrders.map((o) =>
-          o.id === selectedOrder.id ? { ...o, status: "rejected" } : o
+          o.id === selectedOrder.id
+            ? { ...o, status: "cancelled", cancelReason: cancelReason }
+            : o
         )
       );
-
-      setIsRejectDialogOpen(false);
-      setRemark("");
+      setIsCancelDialogOpen(false);
+      setIsDialogOpen(false);
+      setCancelReason("");
     } catch (error) {
-      console.error("Error rejecting order:", error);
+      console.error("Error cancelling order:", error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6 sm:mb-8">
-          Order Confirmations
-        </h1>
+    <div
+      className={`min-h-screen text-gray-900 transition-colors duration-300`}
+    >
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Order Confirmations</h1>
+        </div>
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="w-12 h-12 border-t-2 border-b-2 border-gray-900 rounded-full animate-spin"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : orders.length === 0 ? (
-          <p className="text-center text-xl font-medium text-gray-600">
-            No orders found.
-          </p>
+          <div className={`bg-white rounded-lg shadow-md p-8 text-center`}>
+            <Package className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
+            <p className="text-xl font-medium">No orders found.</p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {orders.map((order) => (
               <OrderCard
                 key={order.id}
-                bookImage={order.product_detail.produc_img}
-                title={order.product_detail.name}
-                requestedBy={order.customerInfo.name}
-                date={formatDate(order.createdAt.seconds)}
-                price={order.product_detail.total_price}
-                onViewDetails={() => handleViewDetails(order)}
+                order={order}
+                onViewDetails={handleViewDetails}
                 onAccept={() => {
                   setSelectedOrder(order);
                   setIsAcceptDialogOpen(true);
                 }}
-                onReject={() => {
+                onCancel={() => {
                   setSelectedOrder(order);
-                  setIsRejectDialogOpen(true);
+                  setIsCancelDialogOpen(true);
                 }}
               />
             ))}
@@ -180,147 +136,73 @@ const OrderConfirmation = () => {
         )}
       </div>
 
-      {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative shadow-xl">
-            <button
-              onClick={() => setIsDialogOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-            <div className="flex flex-col sm:flex-row">
-              <div className="w-full sm:w-1/2 mb-6 sm:mb-0 sm:mr-6">
-                <img
-                  src={selectedOrder?.product_detail.produc_img}
-                  alt={selectedOrder?.product_detail.name}
-                  className="w-full h-64 sm:h-full object-cover rounded-lg"
-                />
-              </div>
-              <div className="w-full sm:w-1/2">
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-                  {selectedOrder?.product_detail.name}
-                </h2>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <DetailItem
-                    title="Customer Name"
-                    value={selectedOrder?.customerInfo.name}
-                  />
-                  <DetailItem
-                    title="Customer Email"
-                    value={selectedOrder?.customerInfo.email}
-                  />
-                  <DetailItem
-                    title="Customer Phone"
-                    value={selectedOrder?.customerInfo.phone}
-                  />
-                  <DetailItem
-                    title="Quantity"
-                    value={selectedOrder?.product_detail.quantity}
-                  />
-                  <DetailItem
-                    title="Total Price"
-                    value={`₹${selectedOrder?.product_detail.total_price}`}
-                  />
-                  <DetailItem
-                    title="Order Date"
-                    value={
-                      selectedOrder &&
-                      formatDate(selectedOrder.createdAt.seconds)
-                    }
-                  />
-                </div>
-                <div className="mt-6 p-4 bg-gray-100 rounded-md text-sm">
-                  <p className="font-medium text-gray-700">
-                    Order ID:{" "}
-                    <span className="font-normal">{selectedOrder?.id}</span>
-                  </p>
-                  <p className="font-medium text-gray-700 mt-2">
-                    Status:{" "}
-                    <span className="font-normal text-yellow-600">Pending</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {isDialogOpen && selectedOrder && (
+        <OrderDetailsDialog
+          order={selectedOrder}
+          onClose={() => setIsDialogOpen(false)}
+          onAccept={() => {
+            setIsDialogOpen(false);
+            setIsAcceptDialogOpen(true);
+          }}
+          onCancel={() => {
+            setIsDialogOpen(false);
+            setIsCancelDialogOpen(true);
+          }}
+        />
       )}
 
       {isAcceptDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center         justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 sm:p-8 shadow-xl">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
-              Confirm Acceptance
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to accept this order? Please ensure you have
-              the product with you.
-            </p>
-            <div className="flex justify-end mt-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div
+            className={`${"bg-white text-gray-900"} rounded-lg p-6 max-w-sm w-full`}
+          >
+            <h2 className="text-xl font-semibold mb-4">Confirm Acceptance</h2>
+            <p className="mb-6">Are you sure you want to accept this order?</p>
+            <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setIsAcceptDialogOpen(false)}
-                className="mr-2 px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+                className={`px-4 py-2 ${"bg-gray-200 text-gray-800"} rounded-lg hover:opacity-80 transition-opacity`}
               >
                 Cancel
               </button>
               <button
                 onClick={handleAccept}
-                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
               >
-                Confirm
+                Accept
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {isRejectDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 sm:p-8 shadow-xl">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">
-              Confirm Rejection
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to cancel this order? Please provide a
-              remark for the cancellation.
-            </p>
+      {isCancelDialogOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div
+            className={`${"bg-white text-gray-900"} rounded-lg p-6 max-w-sm w-full`}
+          >
+            <h2 className="text-xl font-semibold mb-4">Cancel Order</h2>
+            <p className="mb-4">Please provide a reason for cancellation:</p>
             <textarea
-              className="w-full p-2 border border-gray-300 rounded-md mb-4"
+              className={`w-full p-2 border ${"bg-white border-gray-300"} rounded-md mb-4`}
               rows="3"
-              placeholder="Enter your remark here"
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              required
-            />
-            <div className="flex justify-end mt-4">
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Enter cancellation reason"
+            ></textarea>
+            <div className="flex justify-end space-x-2">
               <button
-                onClick={() => {
-                  setIsRejectDialogOpen(false);
-                  setRemark("");
-                }}
-                className="mr-2 px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
+                onClick={() => setIsCancelDialogOpen(false)}
+                className={`px-4 py-2 ${"bg-gray-200 text-gray-800"} rounded-lg hover:opacity-80 transition-opacity`}
               >
-                Cancel
+                Back
               </button>
               <button
-                onClick={handleReject}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                disabled={!remark.trim()}
+                onClick={handleCancel}
+                className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors"
+                disabled={!cancelReason.trim()}
               >
-                Confirm
+                Cancel Order
               </button>
             </div>
           </div>
@@ -329,12 +211,5 @@ const OrderConfirmation = () => {
     </div>
   );
 };
-
-const DetailItem = ({ title, value }) => (
-  <div>
-    <p className="text-gray-500">{title}</p>
-    <p className="text-gray-800 font-medium">{value}</p>
-  </div>
-);
 
 export default OrderConfirmation;

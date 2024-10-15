@@ -19,8 +19,8 @@ const BuyPage = () => {
       const q = query(
         booksRef,
         where("availability", "==", "sell"),
-        where("sellerId", "!=", currentUser?.uid || ""),
-        where("listStatus", "==", true)
+        // where("sellerId", "!=", currentUser?.uid || ""),
+        // where("listStatus", "==", true)
       );
       const querySnapshot = await getDocs(q);
 

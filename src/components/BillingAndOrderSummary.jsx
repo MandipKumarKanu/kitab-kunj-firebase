@@ -10,6 +10,7 @@ import {
   setDoc,
   arrayRemove,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -104,7 +105,7 @@ function BillingAndOrderSummary() {
     }
   };
 
-  console.log(checkoutData.selectedBooks);
+  console.log(checkoutData);
 
   const generateOrderData = () => {
     const purchaseOrderId = `order_${Date.now()}`;
@@ -159,81 +160,91 @@ function BillingAndOrderSummary() {
       }
     } else if (paymentMethod === "credit") {
       try {
+        const batch = writeBatch(db);
         const unavailableBooks = [];
+        let userCartUpdates = [];
+
+        const booksBySeller = orderData.product_details.reduce((acc, book) => {
+          if (!acc[book.sellerId]) {
+            acc[book.sellerId] = [];
+          }
+          acc[book.sellerId].push(book);
+          return acc;
+        }, {});
+
         for (const book of orderData.product_details) {
           const bookRef = doc(db, "approvedBooks", book.identity);
           const bookDoc = await getDoc(bookRef);
 
           if (!bookDoc.exists() || bookDoc.data().listStatus !== true) {
             unavailableBooks.push(book.name);
+          } else {
+            userCartUpdates.push(book.identity);
           }
         }
 
-        if (unavailableBooks.length > 0) {
-          alert(
-            `The following books are no longer available: ${unavailableBooks.join(
-              ", "
-            )}`
+        // if (unavailableBooks.length > 0) {
+        //   alert(
+        //     `The following books are no longer available: ${unavailableBooks.join(
+        //       ", "
+        //     )}`
+        //   );
+        //   return;
+        // }
+
+        const timestamp = Timestamp.now();
+
+        for (const [sellerId, books] of Object.entries(booksBySeller)) {
+          const sellerAmount = books.reduce(
+            (sum, book) => sum + book.total_price,
+            0
           );
-          return;
+
+          const orderRef = await addDoc(collection(db, "orders"), {
+            createdAt: timestamp,
+            status: "pending",
+            paymentMethod,
+            customerInfo: orderData.customerInfo,
+            product_details: books,
+            sellerId: sellerId,
+            amount: sellerAmount,
+            userId: auth.currentUser.uid,
+            read: false,
+          });
+
+          const notificationRef = doc(collection(db, "notification"));
+          batch.set(notificationRef, {
+            orderId: orderRef.id,
+            message: "You have an order waiting to be accepted",
+            status: "pending",
+            sellerId: sellerId,
+            timestamp: timestamp,
+          });
+
+          books.forEach((book) => {
+            const bookRef = doc(db, "approvedBooks", book.identity);
+            batch.update(bookRef, { listStatus: false });
+          });
         }
 
-        const orderPendingRef = collection(db, "pendingOrder");
-        const newOrderRef = doc(orderPendingRef);
-        // const orderId = newOrderRef.id;
+        console.log(userCartUpdates);
 
-        await setDoc(doc(orderPendingRef, orderData.purchaseOrderId), {
-          ...orderData,
-          purchasedBy: auth.currentUser.uid,
-          createdAt: new Date(),
-          status: "pending",
-          paymentMethod,
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        batch.update(userRef, {
+          cart: arrayRemove(...userCartUpdates),
         });
 
-        let index = 0;
+        await batch.commit();
 
-        for (const book of orderData.product_details) {
-          const bookRef = doc(db, "approvedBooks", book.identity);
-
-          // await updateDoc(bookRef, { listStatus: false });
-
-          const verifyOrdersRef = collection(db, "verifyOrders");
-          await addDoc(verifyOrdersRef, {
-            purchaseOrderId: orderData.purchaseOrderId,
-            customerInfo: orderData.customerInfo,
-            product_detail: book,
-            // pendingOrderId: orderId,
-            sellerId: book.sellerId,
-            createdAt: new Date(),
-            index: index,
-          });
-
-          const userId = auth.currentUser.uid;
-          const userRef = doc(db, "users", userId);
-          await updateDoc(userRef, {
-            cart: arrayRemove(book.identity),
-          });
-
-          const notificationRef = collection(db, "notification");
-          await addDoc(notificationRef, {
-            bookId: book.identity,
-            bookTitle: book.name,
-            message: `Your book "${book.name}" has been requested for purchase.`,
-            source: "buy",
-            read: false,
-            sellerId: book.sellerId,
-            timestamp: Timestamp.now(),
-          });
-          setCartLength((prev) => prev - 1);
-          index++;
-        }
+        setCartLength((prevLength) => prevLength - userCartUpdates.length);
 
         sendEmailToSellers(dataToSave);
 
-        console.log(orderData);
+        console.log("Order created successfully");
         navigate("/order-success", { state: { orderData: dataToSave } });
       } catch (error) {
         console.error("Failed to create order:", error);
+        alert("There was an error processing your order. Please try again.");
       }
     }
 

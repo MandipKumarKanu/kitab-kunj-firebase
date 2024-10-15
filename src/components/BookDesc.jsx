@@ -249,7 +249,7 @@ const BookDesc = () => {
                 {book.category}
               </span>
             </div>
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <FontAwesomeIcon
                 icon={faBook}
                 className="text-gray-400 w-5 mr-2"
@@ -258,7 +258,7 @@ const BookDesc = () => {
               <span className="ml-1 font-medium text-gray-900 capitalize">
                 {book.availability}
               </span>
-            </div>
+            </div> */}
           </div>
 
           <div className="mb-8">
@@ -277,7 +277,14 @@ const BookDesc = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
                 Product Details
               </h2>
+
               <div className="flex flex-col gap-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Availability:</span>
+                  <span className="text-gray-900 uppercase font-bold">
+                    {book.availability}
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Edition:</span>
                   <span className="text-gray-900">{book.edition}</span>
@@ -285,7 +292,7 @@ const BookDesc = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Language:</span>
                   <span className="text-gray-900">{book.language}</span>
-                </div>
+              </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Publish Year:</span>
                   <span className="text-gray-900">{book.publishYear}</span>
@@ -322,7 +329,11 @@ const BookDesc = () => {
                 <button
                   onClick={handleAddToCart}
                   disabled={isCartLoading}
-                  className="w-full px-6 py-3 mb-3 bg-gradient-to-t from-blue-500 to-blue-600 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500"
+                  className={`w-full px-6 py-3 mb-3 rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out ${
+                    !isInCart
+                      ? " bg-gradient-to-t from-blue-500 to-blue-600 hover:bg-gradient-to-t hover:from-blue-600 hover:to-blue-500 "
+                      : "bg-gray-400"
+                  }`}
                 >
                   {isCartLoading ? (
                     <FontAwesomeIcon icon={faSpinner} spin />

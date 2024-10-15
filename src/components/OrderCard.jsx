@@ -1,57 +1,91 @@
-export const OrderCard = ({
-  bookImage,
-  title,
-  requestedBy,
-  date,
-  price,
-  onViewDetails,
-  onAccept,
-  onReject,
-}) => {
+import { formatDate } from "./utils/timeStampConversion";
+
+export const OrderCard = ({ order, onViewDetails, onAccept, onCancel }) => {
+  const { id, product_details, customerInfo, createdAt, amount, status } =
+    order;
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "accepted":
+        return "bg-emerald-100 text-emerald-800";
+      case "cancelled":
+        return "bg-rose-100 text-rose-800";
+      default:
+        return "bg-amber-100 text-amber-800";
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 transition-all duration-300 hover:shadow-md">
-      <div className="flex flex-col sm:flex-row items-center">
-        <img
-          src={bookImage}
-          alt={title}
-          className="w-full sm:w-24 h-48 sm:h-36 object-cover rounded-md mb-4 sm:mb-0 sm:mr-6"
-        />
-        <div className="flex-grow w-full sm:w-auto">
-          <h2 className="text-xl font-semibold mb-3 text-gray-800">{title}</h2>
-          <div className="grid grid-cols-2 gap-y-2 text-sm">
-            <div>
-              <p className="text-gray-500">Requested by</p>
-              <p className="text-gray-700">{requestedBy}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Date</p>
-              <p className="text-gray-700">{date}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Price</p>
-              <p className="text-gray-700">₹{price}</p>
-            </div>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-100">
+      <div className="flex flex-col h-full">
+        <div className="relative h-48 overflow-hidden bg-gray-100">
+          <div className="absolute inset-0 grid grid-cols-2 gap-1 p-2">
+            {product_details.slice(0, 4).map((product, index) => (
+              <div key={index} className="relative overflow-hidden rounded-lg">
+                <img
+                  src={product.produc_img}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                  <p className="text-white text-xs font-medium text-center px-1">
+                    {product.name}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {product_details.length > 4 && (
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs font-medium rounded-full px-2 py-1">
+                +{product_details.length - 4} more
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex flex-row sm:flex-col justify-center sm:justify-start space-x-2 sm:space-x-0 sm:space-y-2 mt-4 sm:mt-0 sm:ml-6">
-          <button
-            onClick={onAccept}
-            className="px-4 py-1.5 border border-green-500 text-green-500 rounded-full text-sm font-medium hover:bg-green-50 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-200"
-          >
-            Accept
-          </button>
-          <button
-            onClick={onReject}
-            className="px-4 py-1.5 border border-red-500 text-red-500 rounded-full text-sm font-medium hover:bg-red-50 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-200"
-          >
-            Reject
-          </button>
-          <button
-            onClick={onViewDetails}
-            className="px-4 py-1.5 border border-blue-500 text-blue-500 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-200"
-          >
-            View Details
-          </button>
+        <div className="p-4 flex-grow">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-gray-800">
+              Order #{id.slice(-6)}
+            </h2>
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                status
+              )}`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </span>
+          </div>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>Customer: {customerInfo.name}</p>
+            <p>Date: {formatDate(createdAt)}</p>
+            <p>Amount: ₹{amount}</p>
+            <p>Items: {product_details.length}</p>
+          </div>
+        </div>
+        <div className="p-4 bg-gray-50">
+          <div className="flex space-x-2">
+            {status === "pending" && (
+              <>
+                <button
+                  onClick={() => onAccept(order)}
+                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg hover:bg-emerald-600 transition-colors text-sm font-medium"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => onCancel(order)}
+                  className="flex-1 bg-rose-500 text-white py-2 px-4 rounded-lg hover:bg-rose-600 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => onViewDetails(order)}
+              className="flex-1 bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors text-sm font-medium"
+            >
+              View Details
+            </button>
+          </div>
         </div>
       </div>
     </div>
