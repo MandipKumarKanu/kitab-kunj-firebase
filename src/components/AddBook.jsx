@@ -13,8 +13,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
 import { capitalizeFirstLetter } from "./utils/Capitalise";
-import imageCompression from 'browser-image-compression';
-
+import imageCompression from "browser-image-compression";
 
 const bookSchema = z
   .object({
@@ -155,14 +154,14 @@ const AddBook = () => {
       setLoading(true);
 
       const options = {
-        maxSizeMB: 0.8, 
-        maxWidthOrHeight: 1920, 
-        useWebWorker: true 
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
       };
-  
+
       const compressedFile = await imageCompression(bookImage, options);
 
-      console.log(compressedFile, bookImage)
+      console.log(compressedFile, bookImage);
 
       const storageRef = ref(storage, `books/${compressedFile.lastModified}`);
       await uploadBytes(storageRef, compressedFile);
@@ -217,6 +216,25 @@ const AddBook = () => {
       //     [fieldName]: increment(1),
       //   });
       // }
+
+      const today = new Date().toISOString().split("T")[0];
+      const analyticsRef = doc(db, "analytics", today);
+
+      let fieldToIncrement;
+      if (data.bookFor === "donation") {
+        fieldToIncrement = "donations";
+      } else if (data.bookFor === "sell") {
+        fieldToIncrement = "sell";
+      } else if (data.bookFor === "rent") {
+        fieldToIncrement = "rent";
+      }
+
+      if (fieldToIncrement) {
+        await updateDoc(analyticsRef, {
+          [fieldToIncrement]: increment(1),
+          traffic: increment(0),
+        });
+      }
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);

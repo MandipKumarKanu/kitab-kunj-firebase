@@ -5,7 +5,7 @@ import { auth, db } from "../config/firebase.config";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
 const BuyPage = () => {
-  const currentUser = auth.currentUser;
+  const currentUser = auth?.currentUser;
 
   useEffect(() => {
     fetchBookForSell();
@@ -19,8 +19,8 @@ const BuyPage = () => {
       const q = query(
         booksRef,
         where("availability", "==", "sell"),
-        // where("sellerId", "!=", currentUser?.uid || ""),
-        // where("listStatus", "==", true)
+        where("sellerId", "!=", currentUser?.uid || ""),
+        where("listStatus", "==", true)
       );
       const querySnapshot = await getDocs(q);
 
@@ -54,7 +54,7 @@ const BuyPage = () => {
                 publishYear={book.publishYear}
                 condition={book.condition}
                 availability={book.availability}
-              sellingPrice={book.sellingPrice}
+                sellingPrice={book.sellingPrice}
               />
             ))}
         </div>

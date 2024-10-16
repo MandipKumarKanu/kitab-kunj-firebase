@@ -1,7 +1,12 @@
 import React from "react";
+import AnalyticsChart from "./AnalyticsChart";
 
 const AdminDashboard = () => {
-  return <div className="">This is dasboard</div>;
+  return (
+    <>
+      <AnalyticsChart />
+    </>
+  );
 };
 
 export default AdminDashboard;

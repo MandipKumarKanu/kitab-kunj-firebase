@@ -13,7 +13,10 @@ import { auth, db } from "../config/firebase.config";
 import { Package } from "lucide-react";
 import { OrderCard } from "./OrderCard";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
-import { sendOrderAcceptedEmailToCustomer, sendOrderRejectedEmailToCustomer } from "./EmailToCostumer";
+import {
+  sendOrderAcceptedEmailToCustomer,
+  sendOrderRejectedEmailToCustomer,
+} from "./EmailToCostumer";
 
 const OrderConfirmation = () => {
   const [orders, setOrders] = useState([]);
@@ -116,9 +119,11 @@ const OrderConfirmation = () => {
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
         ) : orders.length === 0 ? (
-          <div className={`bg-white rounded-lg shadow-md p-8 text-center`}>
-            <Package className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
-            <p className="text-xl font-medium">No orders found.</p>
+          <div className={`h-[60dvh] flex justify-center items-center text-center`}>
+            <div>
+              <Package className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
+              <p className="text-xl font-medium">No orders found.</p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
