@@ -92,6 +92,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               Order Confirmation
             </NavItem>
           </li>
+          <li>
+            <NavItem to="/admin/ordercanceled" icon={faBook}>
+              Order Canceled
+            </NavItem>
+          </li>
         </ul>
       </nav>
     </div>

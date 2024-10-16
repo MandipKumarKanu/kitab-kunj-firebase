@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { Bell, X, Check, AlertCircle, ChevronRight } from "lucide-react";
 import {
   collection,
   query,
@@ -79,7 +78,15 @@ const NotificationPanel = () => {
 
   const formatTimestamp = (timestamp) => {
     if (timestamp && timestamp.seconds) {
-      return new Date(timestamp.seconds * 1000).toLocaleString();
+      const date = new Date(timestamp.seconds * 1000);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+
+      if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400)
+        return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
     }
     return "Unknown date";
   };
@@ -106,23 +113,34 @@ const NotificationPanel = () => {
     setIsOpen(false);
   };
 
+  const getNotificationIcon = (status) => {
+    switch (status) {
+      case "declined":
+        return <AlertCircle className="text-red-500" />;
+      case "approved":
+        return <Check className="text-green-500" />;
+      default:
+        return <Bell className="text-blue-500" />;
+    }
+  };
+
   return (
     <>
       <ClickOutside onClick={() => setIsOpen(false)} className="relative">
         <motion.button
           onClick={togglePanel}
-          className="text-white relative focus:outline-none transition-transform transform hover:scale-110 duration-200"
-          animate={unreadCount > 0 ? { rotate: [0, -10, 10, -10, 10, 0] } : {}}
-          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5 }}
+          className="text-white relative focus:outline-none transition-all duration-300 hover:text-blue-300"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <FontAwesomeIcon icon={faBell} className="text-2xl" />
+          <Bell className="w-6 h-6 mt-2" />
           <AnimatePresence>
             {unreadCount > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
-                className="absolute top-[-0.55rem] right-[-0.65rem] inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
+                className="absolute top-0 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full"
               >
                 {unreadCount}
               </motion.span>
@@ -133,35 +151,33 @@ const NotificationPanel = () => {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-2xl overflow-hidden z-20 max-h-[80vh] overflow-y-auto"
+              className="fixed inset-x-0 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-full sm:w-96 bg-white rounded-lg shadow-2xl overflow-hidden z-20 max-h-[calc(100vh-5rem)] flex flex-col"
             >
-              <div className="flex justify-between items-center">
-                <div className="pt-2 px-4 ">
-                  <h2 className="text-lg font-semibold">Notifications</h2>
-                </div>
-
+              <div className="sticky top-0 z-10 flex justify-between items-center bg-gray-100 p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Notifications
+                </h2>
                 {unreadCount > 0 && (
                   <button
-                    className="text-right px-4 pt-2 text-blue-600 font-semibold hover:bg-gray-100 transition duration-200"
+                    className="text-blue-600 font-semibold hover:text-blue-800 transition duration-200"
                     onClick={markAllAsRead}
                   >
                     Mark All as Read
                   </button>
                 )}
               </div>
-              <div className="py-2">
+              <div className="flex-grow overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="px-4 py-8 text-gray-500 text-center">
-                    <FontAwesomeIcon icon={faBell} className="text-4xl mb-2" />
+                    <Bell className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                     <p>No new notifications</p>
                   </div>
                 ) : (
                   <>
-                    <div className="border-b border-gray-200 my-2" />
                     {notifications.map((notification) => (
                       <motion.div
                         key={notification.id}
@@ -169,38 +185,34 @@ const NotificationPanel = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        className={`flex flex-col px-4 py-3 hover:bg-gray-100 cursor-pointer transition-all duration-200 ${
+                        className={`flex items-start p-4 hover:bg-gray-50 cursor-pointer transition-all duration-200 ${
                           !notification.read ? "bg-blue-50" : "bg-white"
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
-                        <div className="flex items-center">
-                          <FontAwesomeIcon
-                            icon={faBell}
-                            className={`text-xl ${
-                              !notification.read
-                                ? "text-blue-600"
-                                : "text-gray-400"
-                            }`}
-                          />
-                          <p className="ml-2 text-sm text-gray-800">
+                        <div className="flex-shrink-0 mr-3">
+                          {getNotificationIcon(notification.status)}
+                        </div>
+                        <div className="flex-grow">
+                          <p className="text-sm text-gray-800 font-medium">
                             {notification.message}
                           </p>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatTimestamp(notification.timestamp)}
-                        </p>
-                        {notification.status && (
-                          <p
-                            className={`text-xs mt-1 font-semibold ${
-                              notification.status === "declined"
-                                ? "text-red-500"
-                                : "text-green-500"
-                            }`}
-                          >
-                            Status: {notification.status}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatTimestamp(notification.timestamp)}
                           </p>
-                        )}
+                          {notification.status && (
+                            <p
+                              className={`text-xs mt-1 font-semibold ${
+                                notification.status === "declined"
+                                  ? "text-red-500"
+                                  : "text-green-500"
+                              }`}
+                            >
+                              Status: {notification.status}
+                            </p>
+                          )}
+                        </div>
+                        <ChevronRight className="flex-shrink-0 text-gray-400 w-5 h-5" />
                       </motion.div>
                     ))}
                   </>
@@ -214,19 +226,22 @@ const NotificationPanel = () => {
       <AnimatePresence>
         {popupNotification && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-4 right-4 w-80 p-4 bg-white text-gray-800 rounded-lg shadow-lg z-50 border border-gray-300"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-80 p-4 bg-white text-gray-800 rounded-lg shadow-lg z-50 border-l-4 border-blue-500"
           >
             <div className="flex items-center justify-between">
-              <p className="font-semibold">New Notification</p>
+              <div className="flex items-center">
+                <Bell className="w-5 h-5 text-blue-500 mr-2" />
+                <p className="font-semibold">New Notification</p>
+              </div>
               <button
                 onClick={() => setPopupNotification(null)}
-                className="text-gray-800 focus:outline-none"
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
               >
-                <FontAwesomeIcon icon={faTimes} />
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="mt-2 text-sm">{popupNotification.message}</div>

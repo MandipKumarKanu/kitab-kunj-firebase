@@ -35,6 +35,7 @@ import MyDeclinedBooks from "./components/admin/MyDeclinedBooks";
 import BuyRequests from "./components/admin/BuyRequests";
 import MyApprovedBooks from "./components/admin/MyApprovedBooks";
 import OrderConfirmation from "./components/OrderConfirmation";
+import OrderCanceled from "./components/OrderCanceled";
 
 const App = () => {
   const currentUser = auth.currentUser;
@@ -104,7 +105,7 @@ const App = () => {
               path="/admin/orderConfirmation"
               element={<OrderConfirmation />}
             />
-
+            <Route path="/admin/ordercanceled" element={<OrderCanceled />} />
             <Route
               path="/admin/approvedbooks"
               element={<ViewApprovedBooks />}

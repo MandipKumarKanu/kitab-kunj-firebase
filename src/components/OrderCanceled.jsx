@@ -13,9 +13,8 @@ import { auth, db } from "../config/firebase.config";
 import { Package } from "lucide-react";
 import { OrderCard } from "./OrderCard";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
-import { sendOrderAcceptedEmailToCustomer, sendOrderRejectedEmailToCustomer } from "./EmailToCostumer";
 
-const OrderConfirmation = () => {
+const OrderCanceled = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -32,7 +31,7 @@ const OrderConfirmation = () => {
         const q = query(
           collection(db, "orders"),
           where("sellerId", "==", user.uid),
-          where("status", "==", "pending"),
+          where("status", "==", "cancelled"),
           orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
@@ -40,7 +39,6 @@ const OrderConfirmation = () => {
           id: doc.id,
           ...doc.data(),
         }));
-        console.log(fetchedOrders);
         setOrders(fetchedOrders);
         setLoading(false);
 
@@ -74,7 +72,6 @@ const OrderConfirmation = () => {
       );
       setIsAcceptDialogOpen(false);
       setIsDialogOpen(false);
-      sendOrderAcceptedEmailToCustomer(selectedOrder);
     } catch (error) {
       console.error("Error accepting order:", error);
     }
@@ -97,7 +94,6 @@ const OrderConfirmation = () => {
       setIsCancelDialogOpen(false);
       setIsDialogOpen(false);
       setCancelReason("");
-      sendOrderRejectedEmailToCustomer(selectedOrder, cancelReason);
     } catch (error) {
       console.error("Error cancelling order:", error);
     }
@@ -122,24 +118,21 @@ const OrderConfirmation = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {orders &&
-              orders
-                .filter((order) => order.status === "pending")
-                .map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    onViewDetails={handleViewDetails}
-                    onAccept={() => {
-                      setSelectedOrder(order);
-                      setIsAcceptDialogOpen(true);
-                    }}
-                    onCancel={() => {
-                      setSelectedOrder(order);
-                      setIsCancelDialogOpen(true);
-                    }}
-                  />
-                ))}
+            {orders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onViewDetails={handleViewDetails}
+                onAccept={() => {
+                  setSelectedOrder(order);
+                  setIsAcceptDialogOpen(true);
+                }}
+                onCancel={() => {
+                  setSelectedOrder(order);
+                  setIsCancelDialogOpen(true);
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
@@ -220,4 +213,4 @@ const OrderConfirmation = () => {
   );
 };
 
-export default OrderConfirmation;
+export default OrderCanceled;

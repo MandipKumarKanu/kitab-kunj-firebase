@@ -60,6 +60,14 @@ export const OrderDetailsDialog = ({ order, onClose, onAccept, onCancel }) => {
                   {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                 </span>
               </div>
+              {order.cancelReason && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Reason:</span>
+                  <span className=" text-rose-800 capitalize line-clamp-2">
+                    {order.cancelReason}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Date:</span>
                 <span>{formatDate(order.createdAt)}</span>
@@ -96,7 +104,7 @@ export const OrderDetailsDialog = ({ order, onClose, onAccept, onCancel }) => {
                     <p className="text-gray-600">
                       Quantity: {product.quantity}
                     </p>
-                    <p className="text-gray-600">Price: ₹{product.price}</p>
+                    <p className="text-gray-600">₹ {product.unit_price}</p>
                   </div>
                 </div>
               ))}

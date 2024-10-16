@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   doc,
@@ -7,7 +7,6 @@ import {
   arrayUnion,
   collection,
   addDoc,
-  setDoc,
   arrayRemove,
   Timestamp,
   writeBatch,

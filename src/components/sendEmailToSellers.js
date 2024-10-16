@@ -2,7 +2,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase.config";
 import emailjs from "emailjs-com";
 
-
 export const sendEmailToSellers = (order) => {
   const sellerIds = [
     ...new Set(order.product_details.map((book) => book.sellerId)),
@@ -45,15 +44,15 @@ export const sendEmailToSellers = (order) => {
         const templateParams = {
           subject: "Book Request",
           message,
-          to_email: sellerEmail, 
+          to_email: sellerEmail,
         };
 
         emailjs
           .send(
-            "service_8qw2ss9", 
-            "template_a2wix1p", 
+            "service_8qw2ss9",
+            "template_a2wix1p",
             templateParams,
-            "BAmZcO0uauyoISeH0" 
+            "BAmZcO0uauyoISeH0"
           )
           .then((response) => {
             console.log("Email sent successfully to:", sellerEmail);
