@@ -146,7 +146,7 @@ const Navbar = () => {
                       className="text-2xl"
                     />
                     <span className="absolute -top-2 -right-1 transform translate-x-1 -translate-y-1 z-10 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-white text-sm">
-                      {cartLength || 0}
+                      {cartLength && cartLength > 0 ? cartLength : 0}
                     </span>
                   </NavLink>
                 )}

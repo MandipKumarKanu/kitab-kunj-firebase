@@ -5,14 +5,13 @@ import {
   faHeart as faHeartSolid,
   faBox,
   faBookmark,
-  faBook,
   faTruck,
   faShareNodes,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { RWebShare } from "react-web-share";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { auth, db } from "../config/firebase.config";
 import {
   doc,
@@ -37,6 +36,7 @@ const BookDesc = () => {
   const [isCartLoading, setIsCartLoading] = useState(false);
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -120,6 +120,25 @@ const BookDesc = () => {
     } finally {
       setIsCartLoading(false);
     }
+  };
+
+  const handleBuy = () => {
+    let checkoutData = {
+      selectedAddressIndex: 0,
+      shippingFee: 50,
+      subtotal: book.sellingPrice,
+      selectedBooks: [
+        {
+          id,
+          bookName: book.title,
+          author: book.author,
+          sellingPrice: book.sellingPrice,
+          images: book.images[0],
+          sellerId: book.sellerId,
+        },
+      ],
+    };
+    navigate("/billing", { state: { checkoutData } });
   };
 
   const currentUrl = `${window.location.origin}${location.pathname}`;
@@ -292,7 +311,7 @@ const BookDesc = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Language:</span>
                   <span className="text-gray-900">{book.language}</span>
-              </div>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Publish Year:</span>
                   <span className="text-gray-900">{book.publishYear}</span>
@@ -346,7 +365,10 @@ const BookDesc = () => {
                 </button>
               )}
 
-              <button className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor">
+              <button
+                className="w-full px-6 py-3 bg-gradient-to-t from-primaryColor to-secondaryColor rounded-3xl text-white text-xl font-bold shadow-lg transition-colors duration-300 ease-in-out hover:bg-gradient-to-t hover:from-secondaryColor hover:to-primaryColor"
+                onClick={handleBuy}
+              >
                 <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
                 {book.availability === "rent" ? "Rent Now" : "Buy Now"}
               </button>

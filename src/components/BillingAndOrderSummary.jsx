@@ -27,6 +27,7 @@ function BillingAndOrderSummary() {
   const { setCartLength } = useCart();
 
   const checkoutData = location.state?.checkoutData;
+  console.log(checkoutData)
   const platformFee = checkoutData ? checkoutData.subtotal * 0.1 : 0;
   const totalPayment = checkoutData
     ? checkoutData.subtotal + checkoutData.shippingFee + platformFee
@@ -182,14 +183,14 @@ function BillingAndOrderSummary() {
           }
         }
 
-        // if (unavailableBooks.length > 0) {
-        //   alert(
-        //     `The following books are no longer available: ${unavailableBooks.join(
-        //       ", "
-        //     )}`
-        //   );
-        //   return;
-        // }
+        if (unavailableBooks.length > 0) {
+          alert(
+            `The following books are no longer available: ${unavailableBooks.join(
+              ", "
+            )}`
+          );
+          return;
+        }
 
         const timestamp = Timestamp.now();
 
