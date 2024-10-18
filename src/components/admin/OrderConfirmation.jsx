@@ -9,14 +9,15 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { useLocation } from "react-router-dom";
-import { auth, db } from "../config/firebase.config";
+import { auth, db } from "../../config/firebase.config";
 import { Package } from "lucide-react";
-import { OrderCard } from "./OrderCard";
-import { OrderDetailsDialog } from "./OrderDetailsDialog";
+import { OrderCard } from "../OrderCard";
+import { OrderDetailsDialog } from "../OrderDetailsDialog";
 import {
   sendOrderAcceptedEmailToCustomer,
   sendOrderRejectedEmailToCustomer,
-} from "./EmailToCostumer";
+} from "../EmailToCostumer";
+import Skeleton from "react-loading-skeleton"; // Importing Skeleton
 
 const OrderConfirmation = () => {
   const [orders, setOrders] = useState([]);
@@ -87,13 +88,17 @@ const OrderConfirmation = () => {
     try {
       const orderRef = doc(db, "orders", selectedOrder.id);
       await updateDoc(orderRef, {
-        status: "cancelled",
+        status: "cancelled by seller",
         cancelReason: cancelReason,
       });
       setOrders((prevOrders) =>
         prevOrders.map((o) =>
           o.id === selectedOrder.id
-            ? { ...o, status: "cancelled", cancelReason: cancelReason }
+            ? {
+                ...o,
+                status: "cancelled by seller",
+                cancelReason: cancelReason,
+              }
             : o
         )
       );
@@ -115,11 +120,19 @@ const OrderConfirmation = () => {
           <h1 className="text-4xl font-bold">Order Confirmations</h1>
         </div>
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="p-4 border rounded shadow">
+                <Skeleton height={100} />
+                <Skeleton height={20} className="mt-2" />
+                <Skeleton height={15} className="mt-1" />
+              </div>
+            ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className={`h-[60dvh] flex justify-center items-center text-center`}>
+          <div
+            className={`h-[60dvh] flex justify-center items-center text-center`}
+          >
             <div>
               <Package className="w-16 h-16 text-indigo-500 mx-auto mb-4" />
               <p className="text-xl font-medium">No orders found.</p>
@@ -127,24 +140,23 @@ const OrderConfirmation = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {orders &&
-              orders
-                .filter((order) => order.status === "pending")
-                .map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    onViewDetails={handleViewDetails}
-                    onAccept={() => {
-                      setSelectedOrder(order);
-                      setIsAcceptDialogOpen(true);
-                    }}
-                    onCancel={() => {
-                      setSelectedOrder(order);
-                      setIsCancelDialogOpen(true);
-                    }}
-                  />
-                ))}
+            {orders
+              .filter((order) => order.status === "pending")
+              .map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  onViewDetails={handleViewDetails}
+                  onAccept={() => {
+                    setSelectedOrder(order);
+                    setIsAcceptDialogOpen(true);
+                  }}
+                  onCancel={() => {
+                    setSelectedOrder(order);
+                    setIsCancelDialogOpen(true);
+                  }}
+                />
+              ))}
           </div>
         )}
       </div>

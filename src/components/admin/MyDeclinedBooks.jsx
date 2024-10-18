@@ -22,6 +22,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
 import { formatPrice } from "../utils/formatPrice";
+import Skeleton from "react-loading-skeleton";
 
 const MyDeclinedBooks = () => {
   const [declinedBooks, setDeclinedBooks] = useState([]);
@@ -77,13 +78,27 @@ const MyDeclinedBooks = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <FontAwesomeIcon
-          icon={faSpinner}
-          spin
-          size="2x"
-          className="text-blue-500"
-        />
+      <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-xl overflow-hidden shadow-lg"
+          >
+            <Skeleton height={250} />
+            <div className="p-4">
+              <Skeleton height={20} width="75%" />
+              <Skeleton height={15} width="50%" />
+              <div className="flex justify-between items-center mt-4">
+                <Skeleton height={20} width="25%" />
+                <Skeleton height={15} width="30%" />
+              </div>
+              <div className="flex justify-between items-center w-full">
+                <Skeleton height={35} width="80px" />
+                <Skeleton height={35} width="50px" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -118,10 +133,12 @@ const MyDeclinedBooks = () => {
                 </div>
               </div>
               <div className="p-4">
-                <h2 className="text-xl font-semibold mb-2 text-gray-800">
+                <h2 className="text-xl font-semibold mb-2 text-gray-800 line-clamp-2 h-[3.5rem]">
                   {book.title}
                 </h2>
-                <p className="text-gray-600 mb-2">by {book.author}</p>
+                <p className="text-gray-600 mb-2 line-clamp-1">
+                  by {book.author}
+                </p>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-blue-600 font-bold">
                     {book.availability === "rent"

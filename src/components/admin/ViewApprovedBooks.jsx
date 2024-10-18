@@ -1,18 +1,19 @@
+import React, { useEffect, useState } from "react";
+import ApprovalCard from "./ApprovalCard"; // Import the ApprovalCard component
 import {
   collection,
   getDocs,
   doc,
-  getDoc,
   deleteDoc,
   addDoc,
+  getDoc,
 } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import ApprovalCard from "./ApprovalCard";
 import { db } from "../../config/firebase.config";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ShrinkDescription from "../utils/ShrinkDescription";
 import { formatPrice } from "../utils/formatPrice";
+import Skeleton from "react-loading-skeleton"; // Ensure to install react-loading-skeleton
 
 const ViewApprovedBooks = () => {
   const [books, setBooks] = useState([]);
@@ -22,7 +23,7 @@ const ViewApprovedBooks = () => {
   const [confirmationDialog, setConfirmationDialog] = useState({
     open: false,
     action: null,
-    bookId: null,
+    book: null,
   });
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const ViewApprovedBooks = () => {
   }, []);
 
   const fetchApprovedBooks = async () => {
+    setLoading(true);
     try {
       const approvedBooksRef = collection(db, "approvedBooks");
       const querySnapshot = await getDocs(approvedBooksRef);
@@ -42,7 +44,7 @@ const ViewApprovedBooks = () => {
       );
       setBooks(fetchedBooks);
     } catch (error) {
-      console.error("Error fetching pending books:", error);
+      console.error("Error fetching approved books:", error);
     } finally {
       setLoading(false);
     }
@@ -71,12 +73,10 @@ const ViewApprovedBooks = () => {
       });
 
       await deleteDoc(bookRef);
-
       await sendNotification(
         sellerId || selectedBook.sellerId,
         `Your book "${bookData.title}" has been removed.`,
-        bookData.title,
-        "removed"
+        bookData.title
       );
 
       removeBook(bookId);
@@ -85,13 +85,12 @@ const ViewApprovedBooks = () => {
     }
   };
 
-  const sendNotification = async (sellerId, message, bookTitle, status) => {
+  const sendNotification = async (sellerId, message, bookTitle) => {
     try {
       await addDoc(collection(db, "notification"), {
         sellerId,
         message,
         bookTitle,
-        status,
         timestamp: new Date(),
         read: false,
       });
@@ -106,8 +105,8 @@ const ViewApprovedBooks = () => {
     setSelectedBook(null);
   };
 
-  const handleConfirmation = (action, bookId) => {
-    setConfirmationDialog({ open: true, action, book: { ...bookId } });
+  const handleConfirmation = (action, book) => {
+    setConfirmationDialog({ open: true, action, book });
   };
 
   const confirmAction = async () => {
@@ -117,7 +116,7 @@ const ViewApprovedBooks = () => {
         confirmationDialog.book.sellerId
       );
     }
-    setConfirmationDialog({ open: false, action: null, bookId: null });
+    setConfirmationDialog({ open: false, action: null, book: null });
   };
 
   const handleViewDetails = (book) => {
@@ -131,11 +130,18 @@ const ViewApprovedBooks = () => {
   };
 
   return (
-    <div className="max-w-full mx-auto ">
+    <div className="container mx-auto">
       <h1 className="text-3xl font-bold mb-8 text-gray-800">Approved Books</h1>
 
       {loading ? (
-        <div className="text-center text-gray-500">Loading...</div>
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="p-4 border rounded-lg">
+              <Skeleton height={200} />
+              <Skeleton count={3} className="mt-4" />
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {books.map((book) => (
@@ -145,6 +151,7 @@ const ViewApprovedBooks = () => {
               onRemove={() => handleConfirmation("remove", book)}
               onViewDetails={() => handleViewDetails(book)}
               showApproval={false}
+              showDecline={true}
             />
           ))}
         </div>
@@ -152,7 +159,7 @@ const ViewApprovedBooks = () => {
 
       {isDialogOpen && selectedBook && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-          <div className="bg-[#fff] rounded-lg p-6 max-w-3xl w-full shadow-xl transition-all transform scale-100">
+          <div className="bg-white rounded-lg p-6 max-w-3xl w-full shadow-xl transition-all transform scale-100">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
                 {selectedBook.title}
@@ -209,10 +216,6 @@ const ViewApprovedBooks = () => {
                     selectedBook.postedAt.toDate()
                   ).toLocaleDateString()}
                 </p>
-                <p>
-                  <span className="font-semibold">Status:</span>{" "}
-                  {selectedBook.status === "approved" ? "Approved" : "Removed"}
-                </p>
               </div>
             </div>
 
@@ -246,10 +249,16 @@ const ViewApprovedBooks = () => {
 
             <div className="mt-8 flex justify-end gap-4">
               <button
-                onClick={() => handleRemove(selectedBook.id)}
-                className="px-8 h-10 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition duration-200"
+                onClick={() => handleConfirmation("remove", selectedBook)}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
-                Remove
+                Remove Book
+              </button>
+              <button
+                onClick={closeDialog}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+              >
+                Close
               </button>
             </div>
           </div>
@@ -257,26 +266,33 @@ const ViewApprovedBooks = () => {
       )}
 
       {confirmationDialog.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl transition-all transform scale-100">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Confirm Remove
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Confirm Action
             </h2>
-            <p className="mt-2 text-gray-700">
-              Are you sure you want to remove this book?
+            <p className="mb-4">
+              Are you sure you want to remove the book "
+              {confirmationDialog.book.title}"?
             </p>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setConfirmationDialog({ open: false })}
-                className="px-4 py-2 rounded bg-gray-300 text-gray-800 hover:bg-gray-400 transition duration-200"
-              >
-                Cancel
-              </button>
+            <div className="flex justify-end gap-4">
               <button
                 onClick={confirmAction}
-                className="ml-2 px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition duration-200"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
               >
-                Confirm
+                Yes, Remove
+              </button>
+              <button
+                onClick={() =>
+                  setConfirmationDialog({
+                    open: false,
+                    action: null,
+                    book: null,
+                  })
+                }
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+              >
+                Cancel
               </button>
             </div>
           </div>

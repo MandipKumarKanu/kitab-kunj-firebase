@@ -1,18 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  addDoc,
   collection,
   doc,
   increment,
   Timestamp,
-  updateDoc,
+  writeBatch,
+  serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase.config";
-import { capitalizeFirstLetter } from "./utils/Capitalise";
 import imageCompression from "browser-image-compression";
 
 const bookSchema = z
@@ -119,6 +119,129 @@ const bookSchema = z
     }
   );
 
+const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const generateBookId = () => {
+  return `book_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
+class BookOperations {
+  constructor(currentUser) {
+    this.currentUser = currentUser;
+    this.batch = null;
+  }
+
+  async initializeBatch() {
+    this.batch = writeBatch(db);
+  }
+
+  async compressImage(image) {
+    const options = {
+      maxSizeMB: 0.8,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+    return await imageCompression(image, options);
+  }
+
+  async uploadImage(compressedFile) {
+    const storageRef = ref(storage, `books/${compressedFile.lastModified}`);
+    await uploadBytes(storageRef, compressedFile);
+    return await getDownloadURL(storageRef);
+  }
+
+  prepareBookData(formData, imageUrl) {
+    const baseBookData = {
+      title: capitalizeFirstLetter(formData.bookName),
+      author: formData.author,
+      category: formData.category,
+      publishYear: formData.publishYear,
+      language: formData.bookLanguage,
+      edition: formData.edition,
+      description: formData.description || "",
+      sellerId: this.currentUser.uid,
+      sellerName: this.currentUser.displayName || "",
+      condition: "new",
+      images: [imageUrl],
+      availability: formData.bookFor,
+      postedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      bookId: generateBookId(),
+    };
+
+    switch (formData.bookFor) {
+      case "sell":
+        return {
+          ...baseBookData,
+          originalPrice: formData.originalPrice,
+          sellingPrice: formData.sellingPrice,
+        };
+      case "rent":
+        return {
+          ...baseBookData,
+          originalPrice: formData.originalPrice,
+          perWeekPrice: formData.perWeekPrice,
+        };
+      default:
+        return baseBookData;
+    }
+  }
+
+  updateGlobalAnalytics(today, bookFor) {
+    const globalAnalyticsRef = doc(db, "analytics", today);
+    this.batch.set(
+      globalAnalyticsRef,
+      {
+        traffic: increment(0),
+        totalBooks: increment(1),
+        [`booksFor${bookFor}Count`]: increment(1),
+        lastUpdated: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  updateUserAnalytics(today, bookFor) {
+    const userAnalyticsRef = doc(
+      db,
+      "analytics",
+      this.currentUser.uid,
+      "userStats",
+      today
+    );
+    this.batch.set(
+      userAnalyticsRef,
+      {
+        totalBooks: increment(1),
+        [`booksFor${capitalizeFirstLetter(bookFor)}`]: increment(1),
+        lastUpdated: serverTimestamp(),
+        dailyUploads: increment(1),
+        activeListings: increment(1),
+      },
+      { merge: true }
+    );
+  }
+
+  updateUserProfile(bookFor) {
+    const userRef = doc(db, "users", this.currentUser.uid);
+    this.batch.set(
+      userRef,
+      {
+        totalBooks: increment(1),
+        [`${bookFor}BooksUpload`]: increment(1),
+        // lastBookAddedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  async commitBatch() {
+    await this.batch.commit();
+  }
+}
+
 const AddBook = () => {
   const currentUser = auth.currentUser;
   const [loading, setLoading] = useState(false);
@@ -145,101 +268,33 @@ const AddBook = () => {
   const originalPrice = watch("originalPrice") || 0;
 
   const onSubmit = async (data) => {
-    if (!bookImage) {
-      alert("Please select a book image");
+    if (!bookImage || !currentUser) {
+      alert("Please select a book image and ensure you're logged in");
       return;
     }
 
     try {
       setLoading(true);
+      const bookOps = new BookOperations(currentUser);
+      await bookOps.initializeBatch();
 
-      const options = {
-        maxSizeMB: 0.8,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-      };
+      const compressedFile = await bookOps.compressImage(bookImage);
+      const imageUrl = await bookOps.uploadImage(compressedFile);
 
-      const compressedFile = await imageCompression(bookImage, options);
-
-      console.log(compressedFile, bookImage);
-
-      const storageRef = ref(storage, `books/${compressedFile.lastModified}`);
-      await uploadBytes(storageRef, compressedFile);
-      const imageUrl = await getDownloadURL(storageRef);
-
-      const bookData = {
-        title: capitalizeFirstLetter(data.bookName),
-        author: data.author,
-        category: data.category,
-        publishYear: data.publishYear,
-        language: data.bookLanguage,
-        originalPrice: data.originalPrice || 0,
-        sellingPrice: data.sellingPrice || 0,
-        perWeekPrice: data.perWeekPrice || 0,
-        edition: data.edition,
-        description: data.description || "",
-        sellerId: currentUser?.uid,
-        sellerName: currentUser?.displayName || "",
-        updatedAt: new Date().toISOString(),
-        condition: "new",
-        images: [imageUrl],
-        availability: data.bookFor,
-        postedAt: Timestamp.now(),
-      };
-
-      switch (data.bookFor) {
-        case "rent":
-          delete bookData.sellingPrice;
-          break;
-        case "donation":
-          delete bookData.perWeekPrice;
-          delete bookData.sellingPrice;
-          delete bookData.originalPrice;
-          break;
-        case "sell":
-          delete bookData.perWeekPrice;
-          break;
-      }
-
-      await addDoc(collection(db, "pendingBooks"), bookData);
-
-      // const userRef = doc(db, "users", currentUser?.uid);
-      // const fieldName =
-      //   data.bookFor === "donation"
-      //     ? "donated"
-      //     : data.bookFor === "sell"
-      //     ? "sold"
-      //     : null;
-
-      // if (fieldName) {
-      //   await updateDoc(userRef, {
-      //     [fieldName]: increment(1),
-      //   });
-      // }
+      const bookData = bookOps.prepareBookData(data, imageUrl);
+      const pendingBookRef = doc(collection(db, "pendingBooks"));
+      bookOps.batch.set(pendingBookRef, bookData);
 
       const today = new Date().toISOString().split("T")[0];
-      const analyticsRef = doc(db, "analytics", today);
+      bookOps.updateGlobalAnalytics(today, data.bookFor);
+      bookOps.updateUserAnalytics(today, data.bookFor);
+      bookOps.updateUserProfile(data.bookFor);
 
-      let fieldToIncrement;
-      if (data.bookFor === "donation") {
-        fieldToIncrement = "donations";
-      } else if (data.bookFor === "sell") {
-        fieldToIncrement = "sell";
-      } else if (data.bookFor === "rent") {
-        fieldToIncrement = "rent";
-      }
-
-      if (fieldToIncrement) {
-        await updateDoc(analyticsRef, {
-          [fieldToIncrement]: increment(1),
-          traffic: increment(0),
-        });
-      }
+      await bookOps.commitBatch();
 
       setPreviewImage("/image/addbook.png");
       setBookImage(null);
       reset();
-
       alert("Book added successfully!");
     } catch (error) {
       console.error("Error adding book:", error);

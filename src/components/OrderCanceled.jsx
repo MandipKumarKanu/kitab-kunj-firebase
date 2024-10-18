@@ -31,9 +31,14 @@ const OrderCanceled = () => {
         const q = query(
           collection(db, "orders"),
           where("sellerId", "==", user.uid),
-          where("status", "==", "cancelled"),
+          where("status", "in", [
+            "cancelled",
+            "cancelled by seller",
+            "cancelled by user",
+          ]),
           orderBy("createdAt", "desc")
         );
+
         const querySnapshot = await getDocs(q);
         const fetchedOrders = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -105,7 +110,7 @@ const OrderCanceled = () => {
     >
       <div className="max-w-[1450px] mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Order Confirmations</h1>
+          <h1 className="text-4xl font-bold">Canceled Order</h1>
         </div>
         {loading ? (
           <div className="flex justify-center items-center h-64">

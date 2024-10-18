@@ -87,6 +87,17 @@ const DropdownUser = () => {
 
             <li>
               <Link
+                to="/admin/home"
+                className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+                onClick={() => setDropdownOpen(false)}
+              >
+                <FontAwesomeIcon icon={faBoxOpen} size="lg" />
+                Dashboard
+              </Link>
+            </li>
+
+            <li>
+              <Link
                 to="/myapproved"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
                 onClick={() => setDropdownOpen(false)}

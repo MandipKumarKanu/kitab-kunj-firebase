@@ -34,7 +34,7 @@ import PaymentVerification from "./components/PaymentVerification";
 import MyDeclinedBooks from "./components/admin/MyDeclinedBooks";
 import BuyRequests from "./components/admin/BuyRequests";
 import MyApprovedBooks from "./components/admin/MyApprovedBooks";
-import OrderConfirmation from "./components/OrderConfirmation";
+import OrderConfirmation from "./components/admin/OrderConfirmation";
 import OrderCanceled from "./components/OrderCanceled";
 
 const App = () => {
@@ -110,10 +110,10 @@ const App = () => {
               path="/admin/approvedbooks"
               element={<ViewApprovedBooks />}
             />
-            {/* <Route
+            <Route
               path="/admin/declineddbooks"
               element={<ViewDeclinedBooks />}
-            /> */}
+            />
           </Route>
         </Routes>
       </div>
