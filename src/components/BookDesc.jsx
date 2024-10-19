@@ -25,6 +25,7 @@ import ShrinkDescription from "./utils/ShrinkDescription";
 import { fetchWishlistStatus, toggleWishlist } from "../hooks/Wishlist.Hook";
 import { useCart } from "./context/CartContext";
 import { formatPrice } from "./utils/formatPrice";
+import BookDescSkeleton from "./BookDescSkeleton";
 
 const BookDesc = () => {
   const { setCartLength } = useCart();
@@ -144,7 +145,7 @@ const BookDesc = () => {
   const currentUrl = `${window.location.origin}${location.pathname}`;
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <BookDescSkeleton />;
   }
 
   if (!book) {
@@ -268,16 +269,6 @@ const BookDesc = () => {
                 {book.category}
               </span>
             </div>
-            {/* <div className="flex items-center">
-              <FontAwesomeIcon
-                icon={faBook}
-                className="text-gray-400 w-5 mr-2"
-              />
-              <span className="text-gray-700">Availability: </span>
-              <span className="ml-1 font-medium text-gray-900 capitalize">
-                {book.availability}
-              </span>
-            </div> */}
           </div>
 
           <div className="mb-8">

@@ -33,7 +33,6 @@ export const fetchLatestDonatedBooks = async () => {
       if (!uniqueSellers.has(book.sellerId)) {
         uniqueSellers.add(book.sellerId);
 
-
         const sellerRef = doc(db, "users", book.sellerId);
         const sellerSnapshot = await getDoc(sellerRef);
 

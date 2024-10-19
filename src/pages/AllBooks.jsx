@@ -3,6 +3,7 @@ import BookCard from "../components/BookCard";
 import { auth, db } from "../config/firebase.config";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import HeadingText from "../components/Heading";
+import SkeletonCard from "../components/SkeletonCard";
 
 const AllBooks = () => {
   const currentUser = auth.currentUser;
@@ -10,6 +11,7 @@ const AllBooks = () => {
   const [books, setBooks] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("default");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchAllBook();
@@ -59,6 +61,8 @@ const AllBooks = () => {
       return allBook;
     } catch (error) {
       console.error("Error fetching latest books:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,21 +110,26 @@ const AllBooks = () => {
         </div> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {books.length > 0 &&
-            books.map((book) => (
-              <BookCard
-                key={book.id}
-                id={book.id}
-                img={book.images[0]}
-                name={book.title}
-                author={book.author}
-                publishYear={book.publishYear}
-                sellingPrice={book.sellingPrice}
-                perWeekPrice={book.perWeekPrice}
-                condition={book.condition}
-                availability={book.availability}
-              />
-            ))}
+          {loading
+            ? Array.from({ length: 9 }).map((_, index) => (
+                <SkeletonCard index={index} />
+              ))
+            : books &&
+              books.length > 0 &&
+              books.map((book) => (
+                <BookCard
+                  key={book.id}
+                  id={book.id}
+                  img={book.images[0]}
+                  name={book.title}
+                  author={book.author}
+                  publishYear={book.publishYear}
+                  sellingPrice={book.sellingPrice}
+                  perWeekPrice={book.perWeekPrice}
+                  condition={book.condition}
+                  availability={book.availability}
+                />
+              ))}
         </div>
       </div>
     </>
